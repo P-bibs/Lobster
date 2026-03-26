@@ -1,0 +1,41 @@
+type EventID = i32
+type SpecTime = START | MIDDLE | END
+type SpecDuration = SHORT | MEDIUM | LONG | ALL
+
+// Inputs
+type event_at_frame(id: EventID, state: bool, frame: i32)
+type spec(spec_id: i32, id: EventID, state: bool, ts: SpecTime, dur: SpecDuration)
+
+// Output
+type match()
+
+////////////////////
+// Main algorithm //
+
+// Collect events from temporal data
+rel conseq_event(id, state, f, f + 1) = not event_at_frame(id, state, f - 1) and event_at_frame(id, state, f)
+rel conseq_event(id, state, s, e + 1) = conseq_event(id, state, s, e) and event_at_frame(id, state, e)
+rel event_info(id, state, mid, len) = conseq_event(id, state, s, e) and not event_at_frame(id, state, e) and
+                                      e - s >= 3 and // We need the event to have at least 3 frames
+                                      mid == (s + e) / 2 and len == e - s // We collect the mid-point and duration info
+
+// Check if the events collected match a single specification
+rel match_spec(spec_id) = spec(spec_id, rel_id, state, ts, dur) and event_info(rel_id, state, mid, len) and
+                          event_location(mid, ts) and event_duration(len, dur)
+
+// Check if all specifications are matched
+rel match() = forall(spec_id: spec(spec_id, _, _, _, _) implies match_spec(spec_id))
+
+/////////////
+// Helpers //
+
+type event_location(bound mid: i32, ts: SpecTime)
+rel event_location(mid, START) = mid < 10
+rel event_location(mid, MIDDLE) = 10 <= mid and mid < 20
+rel event_location(mid, END) = 20 <= mid
+
+type event_duration(bound len: i32, dur: SpecDuration)
+rel event_duration(len, SHORT) = len <= 8
+rel event_duration(len, MEDIUM) = 8 < len and len <= 15
+rel event_duration(len, LONG) = 15 < len and len <= 25
+rel event_duration(len, ALL) = 25 < len

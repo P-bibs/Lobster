@@ -1,0 +1,8 @@
+@vilt(top=5)
+type vqa(bound img: Tensor, bound question: String, answer: String)
+
+type image_path(path: String)
+type question(q: String)
+
+rel result(answer) = question(q) and image_path(path) and vqa($load_image(path), q, answer)
+query result

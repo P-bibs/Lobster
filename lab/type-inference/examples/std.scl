@@ -1,0 +1,30 @@
+// Top
+extern type Top
+
+// Integers
+extern type Int <: Top
+extern type u8 <: Int
+extern type u16 <: Int
+extern type u32 <: Int
+extern type u64 <: Int
+extern type u128 <: Int
+extern type usize <: Int
+extern type i8 <: Int
+extern type i16 <: Int
+extern type i32 <: Int
+extern type i64 <: Int
+extern type i128 <: Int
+extern type isize <: Int
+
+// Boolean
+extern type bool <: Top
+
+// Strings
+extern type String <: Top
+
+// Chars
+extern type Char <: Top
+
+// DateTime and Duration
+extern type DateTime <: Top
+extern type Duration <: Top

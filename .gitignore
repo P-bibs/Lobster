@@ -1,0 +1,34 @@
+# Rust and compilation
+target
+/.tmp
+/Cargo.lock
+
+# MacOS
+.DS_Store
+
+# Python
+/.env
+__pycache__
+
+# VSCode
+/.vscode
+
+# Scallop
+*.sclcmpl
+
+raw**
+out**
+env/**
+stratum**.json
+**.nsys-rep
+perf.data
+profile.linux-perf.txt
+host_allocs.txt
+managed_allocs.txt
+managed_allocs_all.txt
+graph.dot
+flamescope.json
+wandb/
+/.scllog
+dotfiles
+*.ncu-rep

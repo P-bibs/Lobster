@@ -1,0 +1,4 @@
+import "../knudsen_hein_fold.scl"
+
+// rel rna("CGCUGUCUGUACUUGUAUCAGUACACUGACGAGUCCCUAAAGGACGAAACAGCG")
+rel rna("CGCUGUCUG")

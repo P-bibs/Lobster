@@ -1,0 +1,123 @@
+@owl_vit(output_fields=["bbox-x", "bbox-y", "bbox-w", "bbox-h"], limit=10)
+type find_object(bound img: Tensor, bound object: String, id: u32, x: u32, y: u32, w: u32, h: u32)
+
+@vilt(top=1)
+type vqa(bound img: Tensor, bound question: String, answer: String)
+
+@py_eval
+type $py_eval_string(s: String) -> String
+
+// all args are variable names
+type Expr = IMAGE(String)
+          | LOC(String, String)
+          | VQA(String, String)
+          | COUNT(String)
+          | EVAL(String)
+          | RESULT(String)
+
+// IMAGE(img_path: String) -> tensor
+// LOC(image: Tensor, object: String) -> bbox
+// VQA(image: Tensor, question: String) -> string
+// COUNT(box: Bbox) -> int
+// EVAL(expr: String) -> string
+// RESULT(var: String) -> string
+
+type process_eval_string(bound id: u32, bound str: String, processed: String)
+rel process_eval_string(n, s, s) = n == 0
+rel process_eval_string(
+  n + 1,
+  str,
+  $string_replace(str_to_eval, $format("{{}}", var), val as String)
+) =
+  var_value_int(var, val, n) and
+  process_eval_string(n, str, str_to_eval)
+
+rel process_eval_string(
+  n + 1,
+  str,
+  $string_replace(str_to_eval, $format("{{}}", var), val as String)
+) =
+  var_value_string(var, val, n) and
+  process_eval_string(n, str, str_to_eval)
+
+rel process_eval_string(
+  n + 1,
+  str,
+  str_to_eval
+) =
+  step(n, _, e) and
+  case e is LOC(_, _) and
+  process_eval_string(n, str, str_to_eval)
+
+rel process_eval_string(
+  n + 1,
+  str,
+  str_to_eval
+) =
+  var_value_tensor(_, _, n) and 
+  process_eval_string(n, str, str_to_eval)
+
+rel eval_tensor(e, $load_image(img_path)) = case e is IMAGE(img_path)
+rel eval_bbox(e, id, x, y, w, h) = case e is LOC(img_name, object) and var_value_tensor(img_name, image, _) and find_object(image, object, id, x, y, w, h)
+
+type eval_string(bound id: u32, bound e: Expr, s: String)
+rel eval_string(id, e, answer) = case e is VQA(img_name, question) and var_value_tensor(img_name, image, _) and vqa(image, question, answer)
+rel eval_string(id, e, $py_eval_string(str_to_eval)) = case e is EVAL(str) and process_eval_string(id, str, str_to_eval)
+rel eval_string(id, e, result) = case e is RESULT(var_name) and var_value_string(var_name, result, _)
+rel eval_string(id, e, result as String) = case e is RESULT(var_name) and var_value_int(var_name, result, _)
+
+type eval_int(e: Expr, n: usize)
+rel eval_int(e, cnt) = cnt := count(bid: var_value_bbox(box_name, bid, _, _, _, _, _) where e: case e is COUNT(box_name))
+
+rel var_value_tensor(var_name, image, id) = step(id, var_name, expr) and eval_tensor(expr, image)
+rel var_value_bbox(var_name, id, x, y, w, h, sid) = step(sid, var_name, expr) and eval_bbox(expr, id, x, y, w, h)
+rel var_value_string(var_name, str, id) = step(id, var_name, expr) and eval_string(id, expr, str)
+rel var_value_int(var_name, val, id) = step(id, var_name, expr) and eval_int(expr, val)
+
+rel final_result(answer) = var_value_string("FINAL_RESULT", answer, _)
+
+// ============================= EXAMPLE =============================
+
+// const E0 = IMAGE("/workspace/aaai_data/gqa_mini_data/images/2329329.jpg")
+// const E1 = LOC("IMAGE","light brown cabinet")
+// const E2 = LOC("IMAGE","coffee table")
+// const E3 = COUNT("BOX0")
+// const E4 = COUNT("BOX1")
+// const E5 = EVAL("'yes' if {ANSWER0} + {ANSWER1} > 0 else 'no'")
+// const E6 = RESULT("ANSWER2")
+
+// const E0 = IMAGE("/workspace/aaai_data/gqa_mini_data/images/2350023.jpg")
+// const E1 = VQA("IMAGE","What contains the soda?")
+// const E2 = RESULT("ANSWER0")
+
+
+type step(id: u32, output_var: String, expr: Expr)
+// rel step = {
+  // (0, "IMAGE", E0),
+  // (1, "BOX0", E1),
+  // (2, "BOX1", E2),
+  // (3, "ANSWER0", E3),
+  // (4, "ANSWER1", E4),
+  // (5, "ANSWER2", E5),
+  // (6, "FINAL_RESULT", E6)
+  // (0, "IMAGE", E0),
+  // (1, "ANSWER0", E1),
+  // (2, "FINAL_RESULT", E2)
+// }
+
+// query var_value_string
+// query var_value_int
+query final_result
+
+// example 07267508:
+// IMAGE=IMAGE("/workspace/aaai_data/gqa_mini_data/images/2350023.jpg")
+// ANSWER0=VQA(image=IMAGE,question='What contains the soda?')
+// FINAL_RESULT=RESULT(var=ANSWER0)
+
+// example 00464293:
+// BOX0=LOC(image=IMAGE,object='light brown cabinet')
+// BOX1=LOC(image=IMAGE,object='coffee table')
+// ANSWER0=COUNT(box=BOX0)
+// ANSWER1=COUNT(box=BOX1)
+// ANSWER2=EVAL(expr="'yes' if {ANSWER0} + {ANSWER1} > 0 else 'no'")
+// FINAL_RESULT=RESULT(var=ANSWER2)

@@ -1,0 +1,49 @@
+// Type definitions
+type filter_size_expr(usize, usize, String)
+type filter_color_expr(usize, usize, String)
+type filter_material_expr(usize, usize, String)
+type filter_shape_expr(usize, usize, String)
+type relate_expr(usize, usize, String)
+
+// yes/no question
+rel eval_yn(e, x > y) = greater_than_expr(e, a, b), eval_num(a, x), eval_num(b, y)
+rel eval_yn(e, x < y) = less_than_expr(e, a, b), eval_num(a, x), eval_num(b, y)
+rel eval_yn(e, x == y) = equal_expr(e, a, b), eval_num(a, x), eval_num(b, y)
+rel eval_yn(e, x == y) = equal_color_expr(e, a, b), eval_query(a, x), eval_query(b, y)
+rel eval_yn(e, x == y) = equal_material_expr(e, a, b), eval_query(a, x), eval_query(b, y)
+rel eval_yn(e, x == y) = equal_shape_expr(e, a, b), eval_query(a, x), eval_query(b, y)
+rel eval_yn(e, x == y) = equal_size_expr(e, a, b), eval_query(a, x), eval_query(b, y)
+rel eval_yn(e, b) = b = exists(o: eval_objs(f, o) where e: exists_expr(e, f))
+
+// count number of objects
+rel eval_num(e, n) = n = count(o: eval_objs(f, o) where e: count_expr(e, f))
+
+// objects filter
+rel eval_objs(e, o) = scene_expr(e), obj(o)
+rel eval_objs(e, o) = unique_expr(e, f), eval_objs(f, o)
+rel eval_objs(e, o) = filter_size_expr(e, f, s), eval_objs(f, o), size(o, s)
+rel eval_objs(e, o) = filter_color_expr(e, f, c), eval_objs(f, o), color(o, c)
+rel eval_objs(e, o) = filter_material_expr(e, f, m), eval_objs(f, o), material(o, m)
+rel eval_objs(e, o) = filter_shape_expr(e, f, s), eval_objs(f, o), shape(o, s)
+rel eval_objs(e, o) = and_expr(e, f1, f2), eval_objs(f1, o), eval_objs(f2, o)
+rel eval_objs(e, o) = or_expr(e, f1, f2) and (eval_objs(f1, o) or eval_objs(f2, o))
+
+// same attribute
+rel eval_objs(e, o) = same_size_expr(e, f), eval_objs(f, p), size(p, c), size(o, c), o != p
+rel eval_objs(e, o) = same_color_expr(e, f), eval_objs(f, p), color(p, c), color(o, c), o != p
+rel eval_objs(e, o) = same_material_expr(e, f), eval_objs(f, p), material(p, m), material(o, m), o != p
+rel eval_objs(e, o) = same_shape_expr(e, f), eval_objs(f, p), shape(p, s), shape(o, s), o != p
+
+// relation
+rel eval_objs(e, o) = relate_expr(e, f, r), eval_objs(f, p), relate(r, p, o), o != p
+
+// eval query
+rel eval_query(e, s) = query_size_expr(e, f), eval_objs(f, o), size(o, s)
+rel eval_query(e, c) = query_color_expr(e, f), eval_objs(f, o), color(o, c)
+rel eval_query(e, m) = query_material_expr(e, f), eval_objs(f, o), material(o, m)
+rel eval_query(e, s) = query_shape_expr(e, f), eval_objs(f, o), shape(o, s)
+
+// Final result
+rel yn_result(y) = root_expr(e), eval_yn(e, y)
+rel num_result(y) = root_expr(e), eval_num(e, y)
+rel query_result(y) = root_expr(e), eval_query(e, y)

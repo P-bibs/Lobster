@@ -1,0 +1,33 @@
+from typing import TypeVar
+
+# Base types
+i8 = TypeVar("i8")
+i16 = TypeVar("i16")
+i32 = TypeVar("i32")
+i64 = TypeVar("i64")
+i128 = TypeVar("i128")
+isize = TypeVar("isize")
+u8 = TypeVar("u8")
+u16 = TypeVar("u16")
+u32 = TypeVar("u32")
+u64 = TypeVar("u64")
+u128 = TypeVar("u128")
+usize = TypeVar("usize")
+f32 = TypeVar("f32")
+f64 = TypeVar("f64")
+bool = TypeVar("bool")
+char = TypeVar("char")
+String = TypeVar("String")
+Symbol = TypeVar("Symbol")
+DateTime = TypeVar("DateTime")
+Duration = TypeVar("Duration")
+Entity = TypeVar("Entity")
+Tensor = TypeVar("Tensor")
+
+# Type families
+Any = TypeVar("Any")
+Number = TypeVar("Number")
+Integer = TypeVar("Integer")
+SignedInteger = TypeVar("SignedInteger")
+UnsignedInteger = TypeVar("UnsignedInteger")
+Float = TypeVar("Float")

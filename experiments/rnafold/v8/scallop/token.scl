@@ -1,0 +1,16 @@
+// The set of nucleotides
+type Nucleotide = A | C | G | U | X
+
+rel all_nucleotide = {A, C, G, U}
+rel char_to_nucleotide = {('A', A), ('C', C), ('G', G), ('U', U)}
+
+rel good_pair_type = {(A, U), (C, G), (G, C), (G, U), (U, A), (U, G)}
+rel pair_type(x, y) = good_pair_type(x, y)
+
+// rel 0.001::bad_pair_type(x, y) = all_nucleotide(x) and all_nucleotide(y) and not good_pair_type(x, y)
+// rel pair_type(x, y) = bad_pair_type(x, y)
+
+// The set of tokens
+type Token = HELIX_STACK_LEFT | HELIX_STACK_RIGHT                         // Helix (0, 1)
+           | INTERN_LOOP_LEFT | INTERN_LOOP_RIGHT | INTERN_LOOP_UNPAIRED  // Internal Loop (2, 3, 4)
+           | EXT_LOOP_UNPAIRED                                            // External Loop (5)

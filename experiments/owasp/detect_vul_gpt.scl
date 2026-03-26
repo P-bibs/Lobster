@@ -1,0 +1,17 @@
+type program(pgm: String)
+type output(result: bool)
+
+@gpt(
+  prompt="""
+Analyze the following Java program and determine whether it contains
+security vulnerability. Output the result in JSON of the form
+{"result": true} or {"result": false}. Do not output anything other
+than JSON.
+
+{{program}}
+  """,
+  model="gpt-4",
+)
+type detect_vul(bound program: String, result: bool)
+
+rel output(result) = program(pgm) and detect_vul(pgm, result)

@@ -1,0 +1,39 @@
+import "ltl.scl"
+
+const VA1 = Cons("v1", 0, Cons("v2", 1, Nil()))
+const VA2 = Cons("v1", 1, Cons("v2", 0, Nil()))
+rel var_assign = {
+  VA1,
+  VA2,
+}
+
+rel time = {0, 1, 2, 3, 4, 5, 6, 7}
+
+rel cate = {
+  (0, "car"),
+  (1, "car"),
+}
+
+rel attr = {
+  // Do nothing for now
+}
+
+rel rela = {
+  (0, "left", 1, 0),
+  (1, "right", 1, 0),
+  (2, "left", 1, 0),
+  (3, "left", 1, 0),
+  (4, "left", 1, 0),
+  (5, "right", 1, 0),
+  (6, "right", 1, 0),
+  (7, "right", 1, 0),
+}
+
+const MY_SPEC = Until(
+  Finally(Logic(RelaAtom("v1", "v2", "left"))),
+  Finally(Logic(RelaAtom("v1", "v2", "right"))),
+)
+
+rel spec(MY_SPEC)
+
+query aligned_va

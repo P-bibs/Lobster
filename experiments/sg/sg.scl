@@ -1,0 +1,5 @@
+@file("/home/paulbib/scallop-v2/experiments/data/tc/fe_body/fe_body.csv")
+type edge(x: u32, y: u32)
+
+rel sg(x,y) = edge(p,x), edge(p,y)
+rel sg(x,y) = edge(a,x), sg(a,b), edge(b,y)

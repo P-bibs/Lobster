@@ -1,0 +1,4 @@
+@gpt(prompt="{{x}}'s {{y}} is {{z}}")
+type composition(bound x: String, bound y: String, z: String)
+
+rel result($string_lower(z)) = composition("mother", "grandmother", z)

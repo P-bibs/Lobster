@@ -1,0 +1,7 @@
+import "../scallop/extract_token.scl"
+
+rel ss("(.((....)).")
+//      0123456789a
+//                0
+
+query unpaired_region

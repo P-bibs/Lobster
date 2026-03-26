@@ -1,0 +1,10 @@
+type rectangle(x1: usize, y1: usize, x2: usize, y2: usize)
+rel rectangle = {}
+
+type coord(x: usize, y: usize)
+rel coord = {}
+
+type pixel_color(x: usize, y: usize)
+rel pixel_color(y,x) = coord(x,y), rectangle(x1, y1, x2, y2), x1 <= x, x <= x2, y1 <= y, y <= y2
+
+query pixel_color

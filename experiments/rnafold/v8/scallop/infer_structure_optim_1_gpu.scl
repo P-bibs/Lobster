@@ -1,0 +1,101 @@
+// ================================================================================================================
+// ==== Parse the probabilistic sequence of RNA sequence token type
+//
+// Input:
+//   token(0, DANGLE)
+//   token(1, HELIX_STACK_LEFT)
+//   token(2, LOOP_LEFT)
+//   token(3, LOOP_UNPAIRED)
+//   token(4, LOOP_UNPAIRED)
+//   token(5, LOOP_RIGHT)
+//   token(6, HELIX_STACK_RIGHT)
+//   token(7, DANGLE)
+//
+// Output:
+//   pair(1, 6), pair(2, 5)
+//   unpaired(0), unpaired(3), unpaired(4), unpaired(7)
+
+// The set of nucleotides
+const A: u32 = 0
+const C: u32 = 1
+const G: u32 = 2
+const U: u32 = 3
+const X: u32 = 4
+
+type all_nucleotide(u32)
+rel all_nucleotide = {A, C, G, U}
+rel char_to_nucleotide = {('A', A), ('C', C), ('G', G), ('U', U)}
+
+type good_pair_type(u32, u32)
+rel good_pair_type = {(A, U), (C, G), (G, C), (G, U), (U, A), (U, G)}
+
+type pair_type(u32, u32)
+rel pair_type(x, y) = good_pair_type(x, y)
+
+// rel 0.001::bad_pair_type(x, y) = all_nucleotide(x) and all_nucleotide(y) and not good_pair_type(x, y)
+// rel pair_type(x, y) = bad_pair_type(x, y)
+
+// The set of tokens
+const HELIX_STACK_LEFT: u32 = 0
+const HELIX_STACK_RIGHT: u32 = 1
+const INTERN_LOOP_LEFT: u32 = 2
+const INTERN_LOOP_RIGHT: u32 = 3
+const INTERN_LOOP_UNPAIRED: u32 = 4
+const EXT_LOOP_UNPAIRED: u32 = 5
+
+// ================================================================================================================
+// ==== Input and output
+
+// Input: sequence and tokens
+type nucleotide(i: u32, n: u32)
+type token(i: u32, token: u32)
+type length(n: u32)
+
+// Output: pairs and unpaired neucleotides
+type pair(i: u32, j: u32)
+type unpaired(i: u32)
+
+// ================================================================================================================
+// ==== Main inference algorithm
+
+// Nucleotide pair
+rel nucleotide_pair(i, j) = nucleotide(i, x_i) and nucleotide(j, x_j) and pair_type(x_i, x_j) and i < j
+
+// Helix stack pairs
+// rel helix_stack(i, j) = token(i, HELIX_STACK_LEFT) and substructure(i + 1, j - 1) and token(j, HELIX_STACK_RIGHT) and nucleotide_pair(i, j)
+rel helix_stack_1(i, j - 1) = token(i, HELIX_STACK_LEFT) and substructure(i + 1, j - 1)
+rel helix_stack_2(i, j) = helix_stack_1(i, j - 1) and token(j, HELIX_STACK_RIGHT)
+rel helix_stack(i, j) = helix_stack_2(i, j) and nucleotide_pair(i, j)
+
+// Intern-loop (unpaired region)
+rel intern_loop_unpaired(i, i) = token(i, INTERN_LOOP_UNPAIRED)
+rel intern_loop_unpaired(i, j + 1) = intern_loop_unpaired(i, j) and token(j + 1, INTERN_LOOP_UNPAIRED) and j - i < 50
+rel intern_loop_part(i, j) = substructure(i, j) or intern_loop_unpaired(i, j)
+
+// Intern-loop
+rel intern_loop_base_1(i, k) = token(i, INTERN_LOOP_LEFT) and substructure(i + 1, k)
+rel intern_loop_base(i, j) = intern_loop_base_1(i, k) and intern_loop_unpaired(k + 1, j)
+rel intern_loop_base(i, j) = intern_loop_base_1(i, k) and substructure(k + 1, j)
+rel intern_loop_base(i, j) = token(i, INTERN_LOOP_LEFT) and intern_loop_unpaired(i + 1, j)
+rel intern_loop_base(i, j) = intern_loop_base(i, k) and intern_loop_part(k + 1, j)
+
+rel intern_loop_1(i, j + 1) = intern_loop_base(i, j) and token(j + 1, INTERN_LOOP_RIGHT)
+rel intern_loop(i, j) = intern_loop_1(i, j) and nucleotide_pair(i, j)
+
+// Dangle region
+rel ext_unpaired_region(i, i) = token(i, EXT_LOOP_UNPAIRED)
+rel ext_unpaired_region(i, j) = ext_unpaired_region(i, j - 1) and token(j, EXT_LOOP_UNPAIRED)
+
+// Substructures
+rel substructure(i, j) = helix_stack(i, j)
+rel substructure(i, j) = intern_loop(i, j)
+
+// Whole RNA structure parsing
+rel well_formed_base(i) = substructure(0, i) or ext_unpaired_region(0, i)
+rel well_formed_base(j) = well_formed_base(i) and substructure(i + 1, j)
+rel well_formed_base(j) = well_formed_base(i) and ext_unpaired_region(i + 1, j)
+rel well_formed() = well_formed_base(n - 1) and length(n)
+
+// Pairs are derived from substructures
+rel pair(i, j) = well_formed() and substructure(i, j)
+rel unpaired(i) = well_formed() and (token(i, INTERN_LOOP_UNPAIRED) or token(i, EXT_LOOP_UNPAIRED))

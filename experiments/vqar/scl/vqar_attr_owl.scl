@@ -1,0 +1,49 @@
+type is_a(String, String)
+type oa_rel(String, String, String)
+type name(String, u32)
+type attr(String, u32)
+type rela(String, u32, u32)
+type target(u32)
+
+
+type img_path(String)
+type idx(u32)
+type infer_name(bool)
+type infer_attr(bool)
+type infer_rela(bool)
+type debug(bool)
+type output(u32)
+type out_bbox(u32, u32, u32, u32, u32)
+type query_attr(String)
+
+rel image($load_image(path)) :- img_path(path)
+
+@owl_vit(
+    object_queries=["air", "airplane", "animal", "apple", "arm", "arms", "bag", "ball", "banana", "bananas", "basket", "bat", "bathroom", "bathtub", "batter", "beach", "beak", "beard", "belt", "bicycle", "bike", "boat", "bottle", "bowl", "box", "boy", "bracelet", "branch", "branches", "bridge", "broccoli", "brush", "building", "bus", "bush", "bushes", "cabinet", "cabinets", "cake", "camera", "cap", "car", "cars", "cat", "catcher", "ceiling", "chain", "chair", "cheese", "clothes", "cloud", "clouds", "coat", "cockpit", "collar", "computer mouse", "cone", "couch", "counter", "countertop", "couple", "crate", "crosswalk", "crust", "cup", "curtain", "dirt", "dish", "dog", "donut", "donuts", "door", "drawer", "ear", "elephant", "eye", "eyes", "face", "fan", "faucet", "feet", "fence", "field", "finger", "fingers", "flag", "floor", "flower", "flowers", "foot", "forest", "fork", "frame", "frisbee", "frosting", "fruit", "game", "gate", "girl", "glass", "glasses", "glove", "gloves", "grass", "gravel", "ground", "guy", "hair", "hand", "hat", "head", "helmet", "hill", "home plate", "house", "icing", "jacket", "jeans", "jersey", "kite", "knife", "label", "lady", "laptop", "leaves", "leg", "legs", "license plate", "lid", "light bulb", "light switch", "logo", "man", "meat", "mirror", "monitor", "moss", "motorcycle", "mouth", "mug", "neck", "necklace", "net", "nose", "number", "ocean", "olive", "onion", "orange", "oven", "pants", "paper", "park", "pavement", "paw", "people", "pepper", "person", "pillow", "plant", "planter", "plate", "pole", "post", "propeller", "racket", "refrigerator", "ring", "road", "rock", "rocks", "roof", "room", "runway", "sail", "scarf", "scissors", "screen", "seat", "shelf", "shirt", "shoe", "shore", "shorts", "shower", "sign", "sink", "skateboard", "skirt", "sky", "sneakers", "snow", "soap", "sock", "socks", "speaker", "stone", "store", "street", "street light", "suit", "suitcase", "sun", "surfboard", "surfer", "sweater", "t-shirt", "table", "tag", "tail", "teeth", "television", "tennis ball", "tie", "tiles", "tire", "tires", "tongue", "toothbrush", "towel", "towels", "tower", "toy", "train", "train tracks", "trash", "trash can", "tree", "tree branch", "tree trunk", "trees", "truck", "trunk", "uniform", "van", "vase", "vegetables", "vehicle", "vehicles", "wall", "watch", "water", "wetsuit", "wheel", "wheels", "window", "windows", "windshield", "wing", "wings", "wire", "woman", "words", "wristband", "zebra"],
+    output_fields=["class", "bbox-x", "bbox-y", "bbox-w", "bbox-h"],
+    limit=50,
+    score_threshold=0.1,
+)
+    type obj_name(bound image: Tensor, id: u32, name: String, x: u32, y: u32, w: u32, h: u32)
+rel found(Oid, N, x, y, w, h) :- obj_name(img, Oid, N, x, y, w, h), image(img)
+
+rel obj_bbox(Oid, x, y, w, h) = found(Oid, _, x, y, w, h)
+rel name(N, Oid) :- found(Oid, N, _, _, _, _)
+rel obj_img(Oid, $crop_image(img, x, y, w, h)) :- obj_bbox(Oid, x, y, w, h), image(img)
+
+@vilt(top=1, score_threshold=0.9)
+type vqa(bound img: Tensor, bound question: String, answer: String)
+
+rel attr(Attr, Oid) :- infer_attr(true), query_attr(Attr), obj_img(Oid, img), name(N, Oid), N != "thing", N != "object", vqa(img, $string_concat("Is the ", N, " ", Attr, "?"), "yes")
+
+rel is_a(A, C) :- is_a(A, B), is_a(B, C)
+rel is_a(N, "thing") :- name(N, T)
+rel name(N1, Oid) :- name(N2, Oid), is_a(N2, N1)
+
+rel oa_rel("is a type of", Obj, Attr) :- is_a(Obj, Attr)
+rel oa_rel(R, Obj, Attr) :- is_a(Obj, T), oa_rel(R, T, Attr)
+
+
+rel dump_img($save_image($tag_image(img, x, y, w, h, Oid as String, "green", 2), $string_concat(i as String, "_", Oid as String))) :- debug(true), target(Oid), obj_bbox(Oid, x, y, w, h), image(img), idx(i)
+
+rel dump_img($save_image($tag_image(img, x, y, w, h, Oid as String, "green", 2), $string_concat(i as String, "_", "gt", "_", Oid as String))) :- debug(true), output(Oid), out_bbox(Oid, x, y, w, h), image(img), idx(i)

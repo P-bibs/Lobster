@@ -1,0 +1,44 @@
+type symbol(index: u32, symbol: String)
+type length(n: u32)
+
+rel digit = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+
+//type Op = Mult | Div | Add | Sub
+const Mult: u32 = 0
+const Div: u32 = 1
+const Add: u32 = 2
+const Sub: u32 = 3
+
+type factor(value: f32, begin: u32, end: u32)
+rel factor(x as f32, b, b + 1) = symbol(b, x) and digit(x)
+
+rel symbol_parsed(i, Mult) = symbol(i, "*")
+rel symbol_parsed(i, Div) = symbol(i, "/")
+rel symbol_parsed(i, Add) = symbol(i, "+")
+rel symbol_parsed(i, Sub) = symbol(i, "-")
+
+
+type mult_div(value: f32, begin: u32, end: u32)
+rel mult_div(x, b, r) = factor(x, b, r)
+rel mult_div(x * y, b, e) = mult_div(x, b, m) and symbol_parsed(m, Mult) and factor(y, m + 1, e)
+rel mult_div(x / y, b, e) = mult_div(x, b, m) and symbol_parsed(m, Div) and factor(y, m + 1, e)
+type add_minus(value: f32, begin: u32, end: u32)
+//rel add_minus(1,1,1) = factor(a,b,20)
+rel add_minus(x, b, r) = mult_div(x, b, r)
+rel add_minus(x + y, b, e) = add_minus(x, b, m) and symbol_parsed(m, Add) and mult_div(y, m + 1, e)
+rel add_minus(x - y, b, e) = add_minus(x, b, m) and symbol_parsed(m, Sub) and mult_div(y, m + 1, e)
+type result(value: f32)
+rel result(y) = add_minus(y, 0, l) and length(l)
+
+//type mult_div(begin: u32, end: u32, value: f32)
+//rel mult_div(b, r, x) = factor(x, b, r)
+//rel mult_div(b, e, x * y) = mult_div(b, m, x) and symbol_parsed(m, Mult) and factor(y, m + 1, e)
+//rel mult_div(b, e, x / y) = mult_div(b, m, x) and symbol_parsed(m, Div) and factor(y, m + 1, e)
+//type add_minus(begin: u32, end: u32, value: f32)
+//rel add_minus(b, r, x) = mult_div(b, r, x)
+//rel add_minus(b, e, x + y) = add_minus(b,m,x) and symbol_parsed(m, Add) and mult_div(m+1,e,y)
+//rel add_minus(b, e, x - y) = add_minus(b,m,x) and symbol_parsed(m, Sub) and mult_div(m+1,e,y)
+//type result(value: f32)
+//rel result(y) = add_minus(0, l, y) and length(l)
+
+query result

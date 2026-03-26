@@ -1,0 +1,10 @@
+[project]
+name = "scallop-nsfold"
+version = "0.0.1"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."scallop.plugin.load_into_context"]
+nsfold = "scallop_nsfold:load_into_context"

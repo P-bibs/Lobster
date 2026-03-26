@@ -1,0 +1,10 @@
+[project]
+name = "scallop-gpu"
+version = "0.0.2"
+dependencies = ["torch"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."scallop.plugin"]
+gpu = "scallop_gpu:ScallopGPUPlugin"

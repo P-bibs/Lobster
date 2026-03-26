@@ -1,0 +1,24 @@
+import "../scallop/infer_structure.scl"
+
+// ACCUCUCG
+// .((..)).
+//   [..]    // hairpin_loop unpaired_region
+//  [(..)]   // hairpin_loop
+// [((..))]  // helix stack (2)
+//[.((..)).] // dangle + helix stack + dangle
+
+rel token = {
+  (0, EXT_LOOP_UNPAIRED),
+  (1, HELIX_STACK_LEFT),
+  (2, INTERN_LOOP_LEFT),
+  (3, INTERN_LOOP_UNPAIRED),
+  (4, INTERN_LOOP_UNPAIRED),
+  (5, INTERN_LOOP_RIGHT),
+  (6, HELIX_STACK_RIGHT),
+  (7, EXT_LOOP_UNPAIRED),
+}
+rel length(8)
+
+query pair
+query unpaired
+query well_formed

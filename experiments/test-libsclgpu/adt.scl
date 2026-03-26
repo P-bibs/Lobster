@@ -1,0 +1,10 @@
+type List = Cons(u32, List)
+          | Nil()
+
+type inp(n: u32)
+rel inp = {1,2,3}
+
+rel out(new Cons(n, new Nil())) = inp(n)
+
+rel out2(n) = out(l), case l is Cons(n, t)
+

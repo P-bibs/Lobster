@@ -1,0 +1,7 @@
+new_bindings.h
+new_bindings.h.new
+build-*
+compile_commands.json
+*.o
+cmake-*
+.vscode

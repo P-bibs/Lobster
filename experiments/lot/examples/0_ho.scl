@@ -1,0 +1,58 @@
+import "../scl/lot_ho.scl"
+
+//                                                // | rela | sub  obj |
+// "phrase": "A chestnut is part of angiosperm.", // |    0 |   0    1 |
+// "context": "
+//   A chestnut is not a flower.                  // |    1 |   2    8 |
+//   A chestnut is a fruit.                       // |    2 |   3    9 |
+//   A chestnut does not have a brow.             // |    3 |   4   10 |
+//   A flower is part of angiosperm.              // |    4 |   5   11 |
+//   A fruit is not part of angiosperm.           // |    5 |   6   12 |
+//   A chestnut is a woody plant.                 // |    6 |   7   13 |
+// ",
+// "answer": 0
+
+rel question = {
+  (0, 0, 1)
+}
+
+rel context = {
+  (1, 2, 8, true),
+  (2, 3, 9, true),
+  (3, 4, 10, true),
+  (4, 5, 11, true),
+  (5, 6, 12, true),
+  (6, 7, 13, true),
+}
+
+// CHESTNUT
+rel synonym = {
+  (0, 2), (2, 0),
+  (0, 3), (3, 0),
+  (0, 4), (4, 0),
+  (0, 7), (7, 0),
+  (2, 3), (3, 2),
+  (2, 4), (4, 2),
+  (2, 7), (7, 2),
+  (3, 4), (4, 3),
+  (3, 7), (7, 3),
+  (4, 7), (7, 4),
+}
+
+// FRUIT
+rel synonym = {
+  (9, 6), (6, 9),
+}
+
+// ANGIOSPERM
+rel synonym = {
+  (1, 11), (11, 1),
+  (1, 12), (12, 1),
+  (11, 12), (12, 11),
+}
+
+rel transitive_not = {
+  (2, 5, 0)
+}
+
+query answer

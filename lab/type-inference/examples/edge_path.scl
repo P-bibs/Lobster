@@ -1,0 +1,1 @@
+rel edge = {(0, 1), (1, 2)} // inferred to be (int, int)

@@ -1,0 +1,15 @@
+[project]
+name = "scallop-opencv"
+version = "0.0.2"
+dependencies = [
+  "opencv-python",
+  "imgurpython",
+  "torch",
+  "requests"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."scallop.plugin"]
+opencv = "scallop_opencv:ScallopOpenCVPlugin"

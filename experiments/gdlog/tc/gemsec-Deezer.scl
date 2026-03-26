@@ -1,0 +1,3 @@
+@file("./experiments/data/gdlog/gemsec-Deezer.csv", deliminator=",")
+type edge(x: u32, y: u32)
+import "tc.scl"

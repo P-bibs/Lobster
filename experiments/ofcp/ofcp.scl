@@ -1,0 +1,33 @@
+// Input; an image directory
+type img_dir(String)
+
+// Input; a descriptive image name for face tagging
+type img_name(String)
+
+rel image($load_image(img_dir)) = img_dir(img_dir)
+
+// Use face detection model to extract faces from the image
+@face_detection(["cropped-image", "bbox-x", "bbox-y", "bbox-w", "bbox-h"], enlarge_face_factor=1.3)
+type face(bound img: Tensor, id: u32, face_img: Tensor, x: u32, y: u32, w: u32, h: u32)
+
+rel face_image(id, face_img) = image(img), face(img, id, face_img, _, _, _, _)
+rel face_bbox(id, x, y, w, h) = image(img), face(img, id, _, x, y, w, h)
+
+// Prompt GPT for tag names
+@gpt(prompt="Give a semicolon-delimited list of people that could appear in an image titled '{{name}}', where each item is a person's name: {{list}}", model="gpt-4")
+type list_gpt(bound name: String, list: String)
+
+rel names(list) = img_name(name), list_gpt(name, list)
+
+// Classify the faces
+@clip(prompt="the face of {{}}", score_threshold=0.8)
+type face_name(bound face: Tensor, bound list: String, name: String)
+
+rel identity(id, name) = name := top<1>(name: face_name(img, $string_concat(list), name), face_image(id, img), names(list))
+
+// Tag the faces
+rel tag_image(0, img) = image(img)
+rel tag_image(id + 1, $tag_image(img, x, y, w, h, name)) = tag_image(id, img), face_bbox(id, x, y, w, h), identity(id, name)
+rel save_image($save_image(img, $string_concat("tagged_", img_name))) = tag_image(n as u32, img), n := count!(id: identity(id, name)), img_name(img_name)
+
+query save_image

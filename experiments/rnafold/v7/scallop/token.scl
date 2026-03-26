@@ -1,0 +1,5 @@
+// The set of tokens
+type Token = HELIX_STACK_LEFT | HELIX_STACK_RIGHT                         // Helix (0, 1)
+           | HAIRPIN_LEFT | HAIRPIN_RIGHT | HAIRPIN_UNPAIRED              // Hairpin (2, 3, 4)
+           | INTERN_LOOP_LEFT | INTERN_LOOP_RIGHT | INTERN_LOOP_UNPAIRED  // Internal Loop (5, 6, 7)
+           | DANGLE                                                       // Dangle (8)

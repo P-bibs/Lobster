@@ -1,0 +1,30 @@
+import "../scl/lot_ho.scl"
+
+//                                       // rela | sub | obj
+// "phrase": "A colleague is a layer.",  //    0 |   0 |   1
+// "context": "
+//   A colleague is a person.            //    1 |   2 |   4
+//   A person is not a layer.            //    2 |   3 |   5
+// ",
+// "answer": 0
+
+rel question = {
+  (0, 0, 1)
+}
+
+rel context = {
+  (1, 2, 4, true),
+  (2, 3, 5, true),
+}
+
+rel synonym = {
+  (0, 2), (2, 0), // colleague
+  (4, 3), (3, 4), // person
+  (1, 5), (5, 1), // layer
+}
+
+rel transitive_not = {
+  (1, 2, 0),
+}
+
+query answer

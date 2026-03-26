@@ -1,0 +1,55 @@
+// Leap-of-thought
+
+type phrase(rela: String, subject: String, object: String) // The question to ask
+type implicit_context(rela: String, subject: String, object: String) // Implicit context
+type context(rela: String, subject: String, object: String, validity: bool) // Context
+
+// Things can be derived from positive and negative contexts
+type derived(rela: String, subject: String, object: String, validity: bool)
+
+// Base cases
+rel derived(r, s, o, true) = implicit_context(r, s, o)
+rel derived(r, s, o, v) = context(r, s, o, v)
+
+// Equivalance
+rel rela_equiv = {
+  ("can", "is able to"),
+}
+rel derived(r1, s, o, x) = derived(r2, s, o, x), (rela_equiv(r1, r2) or rela_equiv(r2, r1))
+
+// Symmetry
+rel rela_sym = {
+  ("married"),
+}
+rel derived(r, o, s, x) = derived(r, s, o, x), rela_sym(r)
+
+// Inversion
+rel rela_inv = {
+  ("love", "thrill"),
+}
+rel derived(r2, o, s, x) = derived(r1, s, o, x), (rela_inv(r1, r2) or rela_inv(r2, r1))
+
+// Negation
+rel attr_neg = {
+  ("big", "small"),
+}
+rel derived("is", o, a, !x) = derived("is", o, b, x), (attr_neg(a, b) or attr_neg(b, a))
+
+// Implication
+rel implication = {
+  ("is a", "mammal", "has a", "hair"),
+  ("is a", "mammal", "has a", "neocortex"),
+}
+rel derived(imp_rela, sub, imp_obj, true) = derived(src_rela, sub, obj, true), implication(src_rela, obj, imp_rela, imp_obj)
+
+// Transitivity
+rel transitive = {
+  ("is a", "is a", "is a"),
+  ("is a", "has a", "has a"),
+  ("is a", "is part of", "is part of"),
+  ("cause", "cause", "cause"),
+}
+rel derived(r3, a, c, x && y) = derived(r1, a, b, x), derived(r2, b, c, y), transitive(r1, r2, r3)
+
+// The answer asked about a phrase and whether it is derived
+rel answer(y) = phrase(rela, sub, obj), derived(rela, sub, obj, y)

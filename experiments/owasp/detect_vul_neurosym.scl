@@ -1,0 +1,181 @@
+type program(pgm: String)
+type output(result: bool)
+
+@gpt_extract_info(
+  header="""
+You are an experienced program security analyzer.
+Given the following Java program, please analyze it for taint analysis.
+Extract the dataflow edges, sources, sanitizers, and sinks in the program.
+When a variable is assigned multiple times, please label each variable using `var#n` where `n` represents its n-th version.
+When a function call to a specified function is happening, construct the dataflow stepping into and out of the function.
+Sources are usually statements attempting to obtain malicious information from network request, or creation of random values.
+The sinks are usually directly related to vulnerability, such as executing OS command, traversing a path,
+creating file, writing to network response, or running a SQL query.
+Please output everything in JSON.
+  """,
+  prompts=[
+    "What are the dataflow edges in the program where taint information may pass through?",
+    "What are the sources of taint information in the program?",
+    // "What are the sanitizers that stop the propagation of taint information?",
+    "What are the sinks where potential taint information may cause harm to the system?",
+  ],
+  examples=[
+    (
+      ["""
+public void doPost(HttpServletRequest request, HttpServletResponse response) {
+  String param = request.getParam("BenchmarkTest00657");
+  String bar = "safe!";
+  java.util.HashMap<String, Object> map27260 = new java.util.HashMap<String, Object>();
+  map27260.put("keyA-27260", "a_Value");
+  map27260.put("keyB-27260", param);
+  map27260.put("keyC", "another_Value");
+  bar = (String) map27260.get("keyB-27260");
+  bar = (String) map27260.get("keyA-27260");
+  String cmd = "echo";
+  Runtime r = Runtime.getRuntime();
+  Process p = r.exec(cmd + bar);
+}
+      """],
+      [
+        [
+          ("param = request.getParam(\"BenchmarkTest00657\")", "map27260.put(\"keyB-27260\", param)"),
+          ("map27260.put(\"keyB-27260\", param)", "bar#1 = (String) map27260.get(\"keyB-27260\")"),
+          ("map27260.put(\"keyA-27260\", \"a_Value\")", "bar#2 = (String) map27260.get(\"keyA-27260\")"),
+          ("bar#2 = (String) map27260.get(\"keyA-27260\")", "p = r.exec(cmd + bar)")
+        ],
+        [
+          ("param = request.getParam(\"BenchmarkTest00657\")",)
+        ],
+        // [],
+        [
+          ("p = r.exec(cmd + bar)"),
+        ]
+      ]
+    ),
+//     (
+//       ["""
+// public void doPost(HttpServletRequest request, HttpServletResponse response) {
+//   org.owasp.benchmark.helpers.SeparateClassRequest scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request);
+//   String param = scr.getTheParameter("BenchmarkTest00651");
+//   if (param == null) param = "";
+
+//   String bar;
+//   int num = 196;
+//   if ((500 / 42) + num > 200) bar = param;
+//   else bar = "This should never happen";
+
+//   response.setHeader("X-XSS-Protection", "0");
+//   int length = 1;
+//   if (bar != null) {
+//       length = bar.length();
+//       response.getWriter().write(bar, 0, length);
+//   }
+// }
+//       """],
+//       [
+//         [
+//           ("scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request)", "param = scr.getTheParameter(\"BenchmarkTest00651\")"),
+//           ("param = scr.getTheParameter(\"BenchmarkTest00651\")", "bar = param"),
+//           ("bar = param", "response.getWriter().write(bar, 0, length)")
+//         ],
+//         [
+//           ("scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request)")
+//         ],
+//         [
+//           ("response.getWriter().write(bar, 0, length)")
+//         ]
+//       ]
+//     ),
+    (
+      ["""
+public void doPost(HttpServletRequest request, HttpServletResponse response) {
+  long l = new java.util.Random().nextLong();
+  String rememberMeKey = Long.toString(l);
+  String user = "Logan";
+  String cookieName = "rememberMe" + testCaseNumber;
+  javax.servlet.http.Cookie rememberMe = new javax.servlet.http.Cookie(cookieName, rememberMeKey);
+  rememberMe.setSecure(true);
+  rememberMe.setHttpOnly(true);
+  rememberMe.setPath(request.getRequestURI());
+  request.getSession().setAttribute(cookieName, rememberMeKey);
+  response.addCookie(rememberMe);
+  response.getWriter().println(user + " has been remembered with cookie: " + rememberMe.getName() + " whose value is: " + rememberMe.getValue() + "<br/>");
+}
+      """],
+      [
+        [
+          ("l = new java.util.Random().nextLong()", "rememberMeKey = Long.toString(l)"),
+          ("rememberMeKey = Long.toString(l)", "rememberMe = new javax.servlet.http.Cookie(cookieName, rememberMeKey)"),
+          ("rememberMe = new javax.servlet.http.Cookie(cookieName, rememberMeKey)", "request.getSession().setAttribute(cookieName, rememberMeKey)"),
+        ],
+        [
+          ("l = new java.util.Random().nextLong()")
+        ],
+        // [],
+        [
+          ("request.getSession().setAttribute(cookieName, rememberMeKey)")
+        ]
+      ]
+    ),
+    (
+      ["""
+public void doPost(HttpServletRequest request, HttpServletResponse response) {
+  org.owasp.benchmark.helpers.SeparateClassRequest scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request);
+  String param = scr.getTheValue("BenchmarkTest01771");
+  String bar = doSomething(request, param);
+  response.setHeader("X-XSS-Protection", "0");
+  response.getWriter().println(bar);
+}
+
+public String doSomething(HttpServletRequest request, String param) {
+  String a58724 = param;
+  StringBuilder b58724 = new StringBuilder(a58724);
+  b58724.append(" SafeStuff");
+  b58724.replace(b58724.length() - "Chars".length(), b58724.length(), "Chars");
+  String d58724 = b58724.substring(0, b58724.length() - 1);
+  String e58724 = new String(org.apache.commons.codec.binary.Base64.decodeBase64(org.apache.commons.codec.binary.Base64.encodeBase64(d58724.getBytes())));
+  String f58724 = e58724.split(" ")[0];
+  org.owasp.benchmark.helpers.ThingInterface thing = org.owasp.benchmark.helpers.ThingFactory.createThing();
+  String bar = thing.doSomething(f58724);
+  return bar;
+}
+      """],
+      [
+        [
+          ("scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request)", "param = scr.getTheValue(\"BenchmarkTest01771\")"),
+          ("param = scr.getTheValue(\"BenchmarkTest01771\")", "a58724 = param"),
+          ("a58724 = param", "b58724 = new StringBuilder(a58724)"),
+          ("\" SafeStuff\"", "return bar"),
+          ("return bar", "bar = doSomething(request, param)"),
+          ("bar = doSomething(request, param)", "response.getWriter().println(bar)"),
+        ],
+        [
+          ("scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request)")
+        ],
+        // [],
+        [
+          ("response.getWriter().println(bar)")
+        ]
+      ]
+    )
+  ],
+  // cot=[true, false, false, false],
+  model="gpt-4o",
+  debug=true,
+)
+type extract_dataflow_edge(bound pgm: String, from: String, to: String),
+     extract_source(bound pgm: String, source: String),
+     // extract_sanitizer(bound pgm: String, sanitizer: String),
+     extract_sink(bound pgm: String, sink: String)
+
+rel dataflow_edge(x, y) = program(pgm) and extract_dataflow_edge(pgm, x, y)
+rel source(x) = program(pgm) and extract_source(pgm, x)
+// rel sanitizer(x) = program(pgm) and extract_sanitizer(pgm, x)
+rel sink(x) = program(pgm) and extract_sink(pgm, x)
+
+rel path(x, y) = dataflow_edge(x, y) // and not sanitizer(y)
+rel path(x, z) = path(x, y) and dataflow_edge(y, z) // and not sanitizer(z)
+
+rel vulnerable(x, y) = source(x) and path(x, y) and sink(y)
+
+rel output(true) = vulnerable(x, y)

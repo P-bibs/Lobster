@@ -1,0 +1,185 @@
+id,res1,res2,res3,res4,res5,answer
+07267508,bottle,cup,glass,table,vase,bottle
+00464293,cabinet,counter,no,table,yes,yes
+13852280,bus,neither,no,windows,yes,no
+151004785,antique,classic,metal,modern,old,antique
+01248326,1,no,not sure,unknown,yes,no
+12976953,0,neither,no,skis,yes,no
+17908046,0,1,2,no,yes,no
+05712037,benches,boats,neither,no,yes,yes
+06407231,1,2,no,red,yes,yes
+12863527,n,no,nowhere,o,yes,no
+14596273,boxes,neither,no,vases,yes,yes
+10956726,brown,dirt,grass,neither,no,no
+18768487,0,n,no,o,yes,no
+06841755,bus,cars,neither,no,vehicles,no
+02156784,1,2,3,no,yes,yes
+15581454,bed,bedroom,neither,no,yes,yes
+17819175,1,2,6,no,yes,no
+05957063,1,2,3,no,yes,no
+10809246,0,1,2,no,yes,yes
+14838655,bed,bookshelf,desk,shelf,table,table
+03958249,0,n,no,o,yes,no
+10351951,black,luggage,neither,no,yes,yes
+04301392,1,boy,man,no,yes,no
+02291924,animals,neither,no,nothing,yes,no
+10895012,0,cars,neither,no,yes,no
+03325137,1,2,no,unknown,yes,no
+02692835,0,n,no,not sure,yes,no
+00905298,buses,cars,neither,no,vehicles,no
+18216628,beach,no,rocks,water,yes,no
+15892838,0,2,brown,no,yes,no
+13582222,0,1,2,no,yes,no
+13687342,0,1,2,no,yes,no
+12493418,0,n,no,o,yes,no
+13185688,chair,neither,no,table,yes,no
+15496417,0,1,2,no,yes,no
+14624121,0,neither,no,unknown,yes,no
+05341180,0,neither,no,surfboards,yes,no
+17846405,1,bus,no,white,yes,bus
+01973635,bacon,beans,no,pancakes,yes,yes
+11664361,letters,neither,no,stripes,yes,yes
+04469858,0,neither,no,nothing,yes,no
+07319675,0,1,2,no,yes,no
+1679381,1,2,3,no,yes,yes
+08633786,0,1,2,no,yes,no
+07902693,both,neither,no,phone,yes,no
+06576330,0,neither,no,nowhere,yes,no
+1956166,0,n,no,o,yes,no
+00643321,1,2,3,no,yes,no
+08598481,0,cones,neither,no,yes,no
+14842344,neither,no,nothing,pole,yes,no
+01213080,bird,ducks,neither,no,yes,yes
+07347633,no,nothing,nowhere,skateboard,yes,no
+05308142,chair,chairs,dining,dining room,table,table
+03570105,backpack,head,no,y,yes,yes
+18694829,20,can't tell,no,unknown,yes,no
+12567333,0,neither,no,nowhere,yes,no
+11357161,bench,chair,picnic table,restaurant,table,table
+18753996,0,1,no,nowhere,yes,no
+11691849,1,2,3,no,yes,yes
+02660518,0,1,2,no,yes,no
+0588190,0,can't tell,no,unknown,yes,no
+06481514,neither,no,rackets,tennis,tennis racket,no
+061011753,both,bus,cars,no,yes,yes
+15676935,cheese,chicken,italian,pepperoni,pizza,pizza
+01137607,0,1,2,no,yes,no
+06284139,1,2,3,no,yes,yes
+18792368,chair,dining,table,wood,wooden,table
+14127926,5,6,8,no,yes,yes
+07541447,1,2,3,no,yes,no
+03827972,0,boys,neither,no,yes,no
+02723748,1,2,3,no,yes,no
+03328077,1,2,3,no,yes,no
+07922875,black,cat,n,no,yes,yes
+1444710,apple,cake,chocolate,donut,doughnut,donut
+06106902,neither,no,window,windows,yes,yes
+11124623,books,neither,no,table,yes,no
+05809308,baseball,no,nothing,unknown,yes,no
+19917962,curtain,neither,no,window,yes,yes
+08671111,0,1,no,table,yes,yes
+18853789,desk,kitchen,table,wood,wooden,table
+13592880,0,no,nowhere,o,yes,no
+06160120,girl,lady,man,nobody,woman,woman
+17247357,bathroom,kitchen,no,toilet,yes,bathroom
+01240056,daytime,out,outdoor,outdoors,outside,outdoors
+03933970,calm,clear,cloudy,sunny,warm,clear
+11931098,0,n,no,nowhere,yes,no
+07268980,both,cloudy,overcast,sunny,yes,overcast
+05745216,1,2,3,no,yes,no
+17902757,in,no,outdoors,outside,yes,no
+18585181,animals,neither,no,signs,yes,yes
+14679307,no,outdoors,outside,snow,yes,yes
+18436868,0,1,no,nowhere,yes,no
+07215893,board,sand,surfboard,surfing,water,surfboard
+05393953,boy,girl,lady,man,woman,woman
+0388960,can't tell,n,no,unknown,yes,no
+19448493,little,long,no,short,yes,yes
+02943018,blue,little,n,no,yes,no
+02314219,15,20,many,no,yes,yes
+00626922,0,1,2,no,yes,no
+13370689,counter,desk,floor,table,wood,table
+00265605,0,neither,no,spinach,yes,no
+01872793,bathroom,counter,left,on wall,wall,bathroom
+0919543,0,n,no,nowhere,yes,no
+0119391,cars,neither,no,vehicles,yes,no
+00667562,0,horse,horses,neither,no,no
+022814,1,2,3,no,yes,yes
+18264280,0,1,2,no,yes,no
+00751379,0,1,no,nowhere,yes,yes
+01823211,2,3,4,no,yes,yes
+13868589,building,neither,no,train,yes,no
+03696767,bench,chair,table,wood,wooden,table
+02616363,baseball,men,no,players,yes,yes
+15480577,i don't know,no,not sure,unknown,yes,yes
+03687047,nothing,shirt,shorts,swim trunks,swimsuit,shorts
+00660442,benches,chairs,no,tables,yes,yes
+031041454,0,no,not sure,unknown,yes,no
+15854973,baseball,n,no,nothing,yes,no
+13177233,1,n,no,o,yes,no
+16808474,0,1,no,nowhere,yes,no
+08534516,1,2,3,no,yes,no
+08790563,1,backpack,no,unknown,yes,no
+19294178,chair,placemat,plate,table,tray,dining table
+18789977,iron,metal,steel,wire,wood,metal
+16842758,1,2,3,no,yes,yes
+19775850,no,surfing,very,wet,yes,yes
+13677039,2,neither,no,train,yes,no
+00354634,pan,plate,plates,table,tray,countertop
+05542021,2,don't know,no,unknown,yes,yes
+19415913,neither,no,pictures,windows,yes,no
+08105995,0,neither,no,oranges,yes,no
+04676367,0,adults,neither,no,yes,no
+01275976,daytime,indoors,out,outdoors,outside,outdoors
+01166204,0,1,little,no,yes,no
+0766772,0,1,2,no,yes,no
+08860235,0,1,2,no,yes,yes
+10373906,1,3,4,no,yes,yes
+111051385,no,playing tennis,standing,tennis,yes,yes
+05677299,both,cars,no,windows,yes,yes
+10281172,adult,baby,child,no,yes,yes
+07682516,bike,neither,no,skateboard,yes,no
+14888082,0,1,2,no,yes,no
+03977884,0,1,2,no,yes,yes
+01769473,0,1,2,no,yes,no
+06808264,0,1,2,no,yes,no
+11952435,bridge,on road,road,street,water,street
+17852974,picture,pictures,sign,signs,words,picture frame
+16355655,0,no,on wall,wall,yes,no
+18429857,hat,neither,no,nothing,yes,no
+03794351,0,n,no,nowhere,yes,yes
+19577038,benches,neither,no,table,yes,no
+13584581,0,1,2,no,yes,yes
+14983479,beef,no,rice,steak,yes,yes
+00653461,baseball,baseball field,baseball game,field,stadium,field
+0723321,0,2,n,no,yes,no
+08354448,0,no,nowhere,unknown,yes,no
+05191339,0,1,no,y,yes,no
+13768774,1,glasses,neither,no,yes,no
+14644583,0,neither,no,nowhere,yes,no
+00881217,baby,boy,child,kid,person,boy
+07752893,in,no,o,outside,yes,no
+00517974,0,3,4,no,yes,no
+16373879,both,no,rain,umbrellas,yes,yes
+09439608,0,neither,no,nobody,yes,no
+12813280,door,neither,no,window,yes,yes
+02819773,0,1,2,no,yes,yes
+19899933,neither,no,nothing,paper,yes,no
+121020079,cabinet,desk,dresser,table,wood,dresser
+10461890,neither,no,sign,signs,yes,no
+11541352,1,2,background,no,yes,no
+031060110,helmet,no,poles,skis,yes,no
+17805151,n,no,open,unknown,yes,no
+14673260,0,1,neither,no,yes,no
+11703924,0,1,2,no,yes,yes
+051055846,boxes,neither,no,plates,yes,no
+07805099,dog,n,no,no cat,yes,no
+15244911,flower,flowers,neither,no,yes,no
+18780792,chair,desk,no,table,yes,table
+0463590,neither,no,skis,surfboard,surfboards,no
+16800532,both,fork,neither,no,yes,yes
+13953333,1,2,motorcycle,no,yes,no
+091018805,1,bench,no,right,yes,yes
+00405615,0,1,2,no,yes,no
+0275780,0,n,no,o,yes,no
+16437319,0,neither,no,nowhere,yes,no

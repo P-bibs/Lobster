@@ -1,0 +1,3 @@
+@file("./experiments/data/gdlog/com-dblp/edge.csv", deliminator="\t")
+type edge(x: u32, y: u32)
+import "sg.scl"

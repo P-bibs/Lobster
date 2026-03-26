@@ -1,0 +1,16 @@
+// data_089907f8/1.2,1.3_train.csv, 0
+
+import "../scl/clutrr.scl"
+
+rel context = {
+  (1, "Michael", "Dorothy"),
+  (7, "Dorothy", "Michael"),
+  (2, "Michael", "Donald"),
+  (4, "Donald", "Michael"),
+}
+
+rel question = {
+  ("Donald", "Dorothy"),
+}
+
+query answer

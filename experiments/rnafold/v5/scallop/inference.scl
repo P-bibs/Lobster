@@ -1,0 +1,132 @@
+// ======================
+// == Types and Constants
+// ======================
+type Neucleotide = A=1 | C=2 | G=3 | U=4
+rel neucleotide = {('A', A), ('C', C), ('G', G), ('U', U)}
+rel pair_type = {(C, G), (G, C), (G, U), (U, G), (A, U), (U, A)}
+
+// ===================
+// == To Collect Proof
+// ===================
+type bond(i: usize, j: usize)
+
+// =======================
+// == Learnable Parameters
+// =======================
+type nn_unpaired_region(i: usize, j: usize)
+type nn_helix_stack(i: usize, j: usize)
+type nn_hairpin(i: usize, j: usize)
+type nn_intern_loop_opening(i: usize, j: usize)
+type nn_intern_loop_closing(i: usize, j: usize)
+type nn_multi_loop_opening(i: usize, j: usize)
+type nn_multi_loop_closing(i: usize, j: usize)
+
+// ==================================
+// == Basic input and data structures
+// ==================================
+type rna(rna: String)
+rel len($string_length(rna)) = rna(rna)
+rel base(i, b) = rna(rna) and string_chars(rna, i, c) and neucleotide(c, b)
+rel pair(i, j) = bond(i, j) and base(i, x_i) and base(j, x_j) and pair_type(x_i, x_j)
+
+// =================
+// == Core Algorithm
+// =================
+
+// F: Base cases
+type f(i: usize, j: usize)
+rel f(i, i) = base(i, _)
+rel f(i, j) = f(i + 1, j)
+rel f(i, j) = c(i, k) and f(k + 1, j)
+
+// C: Bond
+type c(i: usize, j: usize)
+rel c(i, j) = H(i, j) // base case: Hairpin
+rel c(i, j) = c(k, l) and I(i, j, k, l) // Internal loop
+rel c(i, j) = m(i + 1, k) and m1(k + 1, j - 1) and L(i, j) // Multi loop
+
+// M: Multi Loop
+type m(i: usize, j: usize)
+rel m(i, j) = m(i, k) and U(k + 1, j)
+rel m(i, j) = U(i, k) and c(k + 1, j) and P(k + 1, j)
+rel m(i, j) = m(i, k) and c(k + 1, j) and P(k + 1, j)
+
+// M1: Base Multi Loop
+type m1(i: usize, j: usize)
+rel m1(i, j) = c(i, j) and P(i, j)
+rel m1(i, j) = m1(i, k) and U(k + 1, j)
+
+// =======
+// == Goal
+// =======
+
+rel outcome() = f(0, n) and len(n)
+
+// =============================
+// == Thermodynamics Computation
+// =============================
+
+// Hairpin:
+//   start   end
+//     |      |
+//    [i]----[j]
+//    /        \
+// [i+1]      [j-1]
+//   |          |
+//  ...        ...
+type H(i: usize, j: usize)
+rel H(i, j) = pair(i, j) and nn_hairpin(i, j) and nn_unpaired_region(i + 1, j - 1)
+
+// Internal Single Loop Score, which accounts for helix stack, bulge, and internal loops
+type I(i: usize, j: usize, k: usize, l: usize)
+
+// Stack:
+//   start   end
+//     |      |
+//    [i]----[j]
+//     |      |
+//   [i+1]--[j-1]
+//     |      |
+//    ...    ...
+rel I(i, j, k, l) = pair(i, j) and pair(i + 1, j - 1) and nn_helix_stack(i, j)
+
+// Bulge:
+//      RIGHT                 LEFT
+//   start   end          start   end
+//     |      |             |      |
+//    [i]----[j]           [i]----[j]
+//     |       \           /       |
+//     |      [j-1]     [i+1]      |
+//     |       ...       ...       |
+//     |       /           \       |
+//   [i+1]---[l]           [k]---[j-1]
+//     |      |             |      |
+//    ...    ...           ...    ...
+rel bulge_loop(i, j, i + 1, l) = pair(i, j) and pair(i + 1, l) and nn_intern_loop_opening(i, j) and nn_intern_loop_closing(i + 1, l) and nn_unpaired_region(l + 1, j - 1)
+rel bulge_loop(i, j, k, j - 1) = pair(i, j) and pair(k, j - 1) and nn_intern_loop_opening(i, j) and nn_intern_loop_closing(k, j - 1) and nn_unpaired_region(i + 1, k - 1)
+rel I(i, j, k, l) = bulge_loop(i, j, k, l)
+
+// General Internal Loop
+//   start     end
+//     |        |
+//    [i]------[j]
+//    /          \
+//  ...(>2)      ...(>2)
+//    \          /
+//    [k]------[l]
+//     |        |
+//    ...      ...
+rel loop_general(i, j, k, l) = pair(i, j) and pair(k, l) and nn_intern_loop_opening(i, j) and nn_intern_loop_closing(k, l) and nn_unpaired_region(i + 1, k - 1) and nn_unpaired_region(l + 1, j - 1)
+rel I(i, j, k, l) = loop_general(i, j, k, l)
+
+// Score of opening of multi loop
+type L(i: usize, j: usize)
+rel L(i, j) = pair(i, j) and nn_multi_loop_opening(i, j)
+
+// Score of one multi Loop Barnch
+type P(i: usize, j: usize)
+rel P(i, j) = pair(i, j) and nn_multi_loop_closing(i, j)
+
+// Score of unpaired region
+type U(i: usize, j: usize)
+rel U(i, j) = nn_unpaired_region(i, j)

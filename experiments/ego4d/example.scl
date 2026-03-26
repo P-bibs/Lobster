@@ -1,0 +1,43 @@
+import "./solve.scl"
+
+const STAND = 0
+const NEAR = 1
+
+rel event_at_frame = {
+  (STAND, true, 0),
+  (STAND, true, 1),
+  (STAND, true, 2),
+  (STAND, true, 3),
+  (STAND, true, 4),
+  (STAND, false, 5),
+  (STAND, false, 6),
+  (STAND, false, 7),
+  (STAND, false, 8),
+  (STAND, false, 9),
+  (STAND, true, 10),
+  (STAND, false, 11),
+  (STAND, true, 12),
+  (STAND, true, 13),
+  (STAND, true, 14),
+
+  (NEAR, false, 0),
+  (NEAR, false, 1),
+  (NEAR, false, 2),
+  (NEAR, false, 3),
+  (NEAR, false, 4),
+  (NEAR, false, 5),
+  (NEAR, false, 6),
+  (NEAR, false, 7),
+  (NEAR, false, 8),
+  (NEAR, false, 9),
+  (NEAR, false, 10),
+  (NEAR, false, 11),
+  (NEAR, false, 12),
+  (NEAR, false, 13),
+  (NEAR, false, 14),
+}
+
+rel spec = {
+  (0, STAND, true, START, SHORT),
+  (1, NEAR, false, START, MEDIUM),
+}

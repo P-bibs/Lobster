@@ -1,0 +1,20 @@
+type program(pgm: String)
+type output(result: bool)
+
+@gpt_extract_info(
+  header="""
+Analyze the following Java program and determine whether it contains
+security vulnerability. First output a reason in the form {"reason": "<YOUR REASONING HERE>"}
+and then output whether you think there is a vulnerability {"result": true or false}.
+  """,
+  prompts=[
+    "Can you reason the following program?",
+    "Based on the analysis, is there a vulnerability in the program?",
+  ],
+  model="gpt-4o",
+)
+type extract_reason(bound program: String, reason: String),
+     detect_vul(bound program: String, result: bool)
+
+rel reason(r) = program(pgm) and extract_reason(pgm, r)
+rel output(result) = program(pgm) and detect_vul(pgm, result)

@@ -1,0 +1,150 @@
+type context(ctx: String)
+
+// Few-shot prompt GPT to extract structured relational data from the natural language question
+// Note that given mentioned kinships and the goal, we can deduce the final answer via a knowledge base of kinship compositions
+@gpt_extract_info(
+  header="Please extract kinships mentioned in the story and the characters whose kinship is desired in the question.",
+  prompts=[
+    "What are the mentioned kinships in JSON format (with `p1`, `p2`, and `rela` fields, denoting `p1` is `p2`'s' `rela`)?",
+    "Whose kinship do we want to find?"
+  ],
+  examples=[
+    (
+      ["Dorothy's brother Michael and her went to get ice cream. Michael is the proud father of the lovely Donald.
+        Who is Dorothy to Donald?"],
+      [
+        [("Michael", "Dorothy", "brother"), ("Dorothy", "Michael", "sister"),
+         ("Michael", "Donald", "father"), ("Donald", "Michael", "son")],
+        [("Dorothy", "Donald")]
+      ]
+    ),
+    (
+      ["Michael and his daughter Jennifer like to read poems together. Jason is the proud father of the lovely Michael.
+        Who is Jason to Jennifer?"],
+      [
+        [("Jennifer", "Michael", "daughter"), ("Michael", "Jennifer", "father"),
+         ("Jason", "Michael", "father"), ("Michael", "Jason", "son")],
+        [("Jason", "Jennifer")]
+      ]
+    ),
+    (
+      ["Kevin loves going to plays with his wife Aida. Aida's dad James, however, does not like them at all.
+        Who is James to Kevin?"],
+      [
+        [("Aida", "Kevin", "wife"), ("Kevin", "Aida", "husband"),
+         ("James", "Aida", "father"), ("Aida", "James", "daughter")],
+        [("James", "Kevin")]
+      ]
+    )
+  ],
+  model="gpt-4",
+)
+type extract_kinship  (bound context: String, p1: String, p2: String, rela: String),
+     extract_question (bound context: String, p1: String, p2: String)
+
+// Extract information from the context
+rel kinship(p1, p2, rela) = context(ctx) and extract_kinship(ctx, p1, p2, rela)
+rel question(p1, p2)      = context(ctx) and extract_question(ctx, p1, p2)
+
+// Knowledge base for composing kinship relations
+rel composition = {
+  ("daughter", "daughter", "granddaughter"),
+  ("daughter", "sister", "daughter"),
+  ("daughter", "son", "grandson"),
+  ("daughter", "aunt", "sister"),
+  ("daughter", "father", "husband"),
+  ("daughter", "husband", "son-in-law"),
+  ("daughter", "brother", "son"),
+  ("daughter", "mother", "wife"),
+  ("daughter", "uncle", "brother"),
+  ("daughter", "grandfather", "father"),
+  ("daughter", "grandfather", "father-in-law"),
+  ("daughter", "grandmother", "mother"),
+  ("daughter", "grandmother", "mother-in-law"),
+  ("sister", "daughter", "niece"),
+  ("sister", "sister", "sister"),
+  ("sister", "son", "nephew"),
+  ("sister", "aunt", "aunt"),
+  ("sister", "father", "father"),
+  ("sister", "brother", "brother"),
+  ("sister", "mother", "mother"),
+  ("sister", "uncle", "uncle"),
+  ("sister", "grandfather", "grandfather"),
+  ("sister", "grandmother", "grandmother"),
+  ("son", "daughter", "granddaughter"),
+  ("son", "sister", "daughter"),
+  ("son", "son", "grandson"),
+  ("son", "aunt", "sister"),
+  ("son", "father", "husband"),
+  ("son", "brother", "son"),
+  ("son", "mother", "wife"),
+  ("son", "uncle", "brother"),
+  ("son", "grandfather", "father"),
+  ("son", "wife", "daughter-in-law"),
+  ("son", "grandmother", "mother"),
+  ("aunt", "sister", "aunt"),
+  ("aunt", "father", "grandfather"),
+  ("aunt", "brother", "uncle"),
+  ("aunt", "mother", "grandmother"),
+  ("father", "daughter", "sister"),
+  ("father", "sister", "aunt"),
+  ("father", "son", "brother"),
+  ("father", "father", "grandfather"),
+  ("father", "brother", "uncle"),
+  ("father", "mother", "grandmother"),
+  ("father", "wife", "mother"),
+  ("husband", "daughter", "daughter"),
+  ("husband", "son", "son"),
+  ("husband", "father", "father-in-law"),
+  ("husband", "granddaughter", "granddaughter"),
+  ("husband", "mother", "mother-in-law"),
+  ("husband", "grandson", "grandson"),
+  ("granddaughter", "sister", "granddaughter"),
+  ("granddaughter", "brother", "grandson"),
+  ("brother", "daughter", "niece"),
+  ("brother", "sister", "sister"),
+  ("brother", "son", "nephew"),
+  ("brother", "aunt", "aunt"),
+  ("brother", "father", "father"),
+  ("brother", "brother", "brother"),
+  ("brother", "mother", "mother"),
+  ("brother", "uncle", "uncle"),
+  ("brother", "grandfather", "grandfather"),
+  ("brother", "grandmother", "grandmother"),
+  ("nephew", "sister", "niece"),
+  ("nephew", "brother", "nephew"),
+  ("mother", "daughter", "sister"),
+  ("mother", "sister", "aunt"),
+  ("mother", "son", "brother"),
+  ("mother", "father", "grandfather"),
+  ("mother", "husband", "father"),
+  ("mother", "brother", "uncle"),
+  ("mother", "mother", "grandmother"),
+  ("mother", "father-in-law", "grandfather"),
+  ("mother", "mother-in-law", "grandmother"),
+  ("uncle", "sister", "aunt"),
+  ("uncle", "father", "grandfather"),
+  ("uncle", "brother", "uncle"),
+  ("uncle", "mother", "grandmother"),
+  ("grandfather", "wife", "grandmother"),
+  ("wife", "daughter", "daughter"),
+  ("wife", "son", "son"),
+  ("wife", "father", "father-in-law"),
+  ("wife", "granddaughter", "granddaughter"),
+  ("wife", "mother", "mother-in-law"),
+  ("wife", "grandson", "grandson"),
+  ("wife", "son-in-law", "son-in-law"),
+  ("wife", "father-in-law", "father"),
+  ("wife", "daughter-in-law", "daughter-in-law"),
+  ("wife", "mother-in-law", "mother"),
+  ("grandmother", "husband", "grandfather"),
+  ("grandson", "sister", "granddaughter"),
+  ("grandson", "brother", "grandson"),
+}
+
+// Perform computation on the kinship graph
+rel derived_kinship(p1, p2, rela) = kinship(p1, p2, rela)
+rel derived_kinship(p1, p3, r3)   = p1 != p3 and derived_kinship(p1, p2, r1) and derived_kinship(p2, p3, r2) and composition(r2, r1, r3)
+
+// Get the answer
+rel result(r) = question(p1, p2) and derived_kinship(p1, p2, r)

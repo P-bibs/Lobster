@@ -1,0 +1,7 @@
+---
+BasedOnStyle: google
+IndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Right
+---
+

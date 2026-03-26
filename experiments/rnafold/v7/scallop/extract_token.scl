@@ -1,0 +1,74 @@
+// ================================================================================================================
+// ==== Extracting Token given a secondary structure in dot-bracket form
+//
+// Input:
+//   ss(".((..)).")
+//
+// Output:
+//   token(0, DANGLE)
+//   token(1, HELIX_STACK_LEFT)
+//   token(2, HAIRPIN_LEFT)
+//   token(3, HAIRPIN_UNPAIRED)
+//   token(4, HAIRPIN_UNPAIRED)
+//   token(5, HAIRPIN_RIGHT)
+//   token(6, HELIX_STACK_RIGHT)
+//   token(7, DANGLE)
+
+import "token.scl"
+
+// ================================================================================================================
+// ==== Input and output
+
+// The input secondary structure in dot-bracket form
+type ss(ss: String)
+
+// Pre-processing data
+rel form(i, c) = ss(ss) and string_chars(ss, i, c)
+rel paired(i) = form(i, '(') or form(i, ')')
+rel len($string_length(ss)) = ss(ss)
+
+// The output
+type token(i: usize, t: Token)
+query token
+
+// ================================================================================================================
+// ==== Main recursion
+
+// unpaired region
+rel unpaired_region_helper(0, 0) = form(0, '.')
+rel unpaired_region_helper(i, i) = paired(i - 1) and form(i, '.')
+rel unpaired_region_helper(i, j) = unpaired_region_helper(i, j - 1) and form(j, '.')
+rel unpaired_region(i, j) = unpaired_region_helper(i, j) and len(n) and j == n - 1
+rel unpaired_region(i, j) = unpaired_region_helper(i, j) and paired(j + 1)
+
+// helix stacking: ( + HELIX_STACK + )
+rel helix_stack(i, i + 1) = form(i, '(') and form(i + 1, ')')
+rel helix_stack(i, j) = form(i, '(') and substructure(i + 1, j - 1) and form(j, ')')
+rel { token(i, HELIX_STACK_LEFT), token(j, HELIX_STACK_RIGHT) } = helix_stack(i, j)
+
+// hairpin loop: ( + UNPAIRED + )
+rel { hairpin(i, j), hairpin_unpaired_region(i + 1, j - 1) } = form(i, '(') and unpaired_region(i + 1, j - 1) and form(j, ')')
+rel { token(i, HAIRPIN_LEFT), token(j, HAIRPIN_RIGHT) } = hairpin(i, j)
+rel { token(k, HAIRPIN_UNPAIRED), hairpin_unpaired(k) } = hairpin_unpaired_region(i, j) and range<usize>(i, j + 1, k)
+
+// intern-loop: ( + UNPAIRED? + INTERN_LOOP + UNPAIRED + ... )
+rel intern_loop_base(i, j) = form(i, '(') and substructure(i + 1, j) and not form(j + 1, ')')
+rel intern_loop_base(i, j) = form(i, '(') and unpaired_region(i + 1, k) and substructure(k + 1, j)
+rel intern_loop_base(i, j) = intern_loop_base(i, k) and substructure(k + 1, j)
+rel intern_loop_base(i, j) = intern_loop_base(i, k) and unpaired_region(k + 1, l) and substructure(l + 1, j)
+rel intern_loop(i, j) = intern_loop_base(i, k) and unpaired_region(k + 1, j - 1) and form(j, ')')
+rel intern_loop(i, j) = intern_loop_base(i, j - 1) and form(j, ')')
+rel { token(i, INTERN_LOOP_LEFT), token(j, INTERN_LOOP_RIGHT) } = intern_loop(i, j)
+rel token(k, INTERN_LOOP_UNPAIRED) = unpaired_region(i, j) and range<usize>(i, j + 1, k) and not hairpin_unpaired(k) and not dangle(k)
+
+// General substructures
+rel substructure(i, j) = hairpin(i, j)
+rel substructure(i, j) = helix_stack(i, j)
+rel substructure(i, j) = intern_loop(i, j)
+
+// full structure is well-formed if...
+rel well_formed() = len(n) and substructure(0, n - 1) // no-dangling
+rel { well_formed(), dangle_region(0, i) } = len(n) and unpaired_region(0, i) and substructure(i + 1, n - 1) // left-dangling
+rel { well_formed(), dangle_region(j + 1, n - 1) } = len(n) and substructure(0, j) and unpaired_region(j + 1, n - 1) // right-dangling
+rel { well_formed(), dangle_region(0, i), dangle_region(j + 1, n - 1) } = len(n) and unpaired_region(0, i) and substructure(i + 1, j) and unpaired_region(j + 1, n - 1) // both-sides-dangling
+rel { token(k, DANGLE), dangle(k) } = dangle_region(i, j) and range<usize>(i, j + 1, k)

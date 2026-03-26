@@ -1,0 +1,27 @@
+import "../scl/lot.scl"
+
+// "phrase": "A chestnut is part of angiosperm.",
+// "context": "
+//   A chestnut is not a flower.
+//   A chestnut is a fruit.
+//   A chestnut does not have a brow.
+//   A flower is part of angiosperm.
+//   A fruit is not part of angiosperm.
+//   A chestnut is a woody plant.
+// ",
+// "answer": 0
+
+rel phrase = {
+  ("is part of", "chestnut", "angiosperm"),
+}
+
+rel context = {
+  ("is a", "chestnut", "fruit", true),
+  ("is part of", "flower", "angiosperm", true),
+  ("is a", "chestnut", "woody plant", true),
+  ("is a", "chestnut", "flower", false),
+  ("has a", "chestnut", "brow", false),
+  ("is part of", "fruit", "angiosperm", false),
+}
+
+query answer

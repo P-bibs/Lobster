@@ -1,0 +1,43 @@
+[package]
+name = "scallop-core"
+version = "0.2.5"
+authors = ["Ziyang Li <liby99@icloud.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["rlib"]
+
+[build-dependencies]
+lalrpop = { version = "0.19.9", features = ["lexer"] }
+cc = { version = "1.0", features = ["parallel"] }
+cmake = "0.1"
+cbindgen = "0.24.0"
+
+[dependencies]
+flame = "0.2.2"
+graphviz-rust = "0.9.0"
+indexmap = "2.2.6"
+lalrpop-util = "0.19.9"
+proc-macro2 = { version = "1.0", features = ["span-locations"] }
+downcast = "0.11"
+quote = "1.0"
+syn = "1.0"
+paste = "1.0"
+itertools = "0.10"
+colored = "2.0"
+petgraph = "0.6"
+csv = "1.1"
+sprs = "0.11"
+chrono = { version = "0.4", features = ["serde"] }
+chronoutil = { git = "https://github.com/Liby99/chronoutil.git" }
+dateparser = "0.1.6"
+dyn-clone = "1.0.10"
+lazy_static = "1.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+parse_relative_duration = { path = "../lib/parse_relative_duration" }
+rand = { version = "0.8", features = ["std_rng", "small_rng", "alloc"] }
+astnode-derive = { path = "../lib/astnode-derive" }
+sdd = { path = "../lib/sdd" }
+ordered-float = "4.5.0"
+rayon = "1.10.0"

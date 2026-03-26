@@ -1,0 +1,264 @@
+// =============
+// == Parameters
+// =============
+import "param_turner2004.scl"
+
+// ============
+// == Constants
+// ============
+const MAX_LENGTH = 1000
+rel neucleotide = {('A', A), ('C', C), ('G', G), ('U', U)}
+rel pair_type = {(C, G, CG), (G, C, GC), (G, U, GU), (U, G, UG), (A, U, AU), (U, A, UA)}
+rel inv_pair_type = {(CG, GC), (GC, CG), (GU, UG), (UG, GU), (AU, UA), (UA, AU)}
+rel is_au = {AU, UA}
+
+// ==================================
+// == Basic input and data structures
+// ==================================
+type rna(rna: String)
+rel len($string_length(rna)) = rna(rna)
+rel base(i, b) = rna(rna) and string_chars(rna, i, c) and neucleotide(c, b)
+rel pair(i, j, p_ij) = base(i, x_i) and base(j, x_j) and pair_type(x_i, x_j, p_ij) and i + 3 < j
+rel inv_pair(i, j, p_ji) = pair(i, j, p_ij) and inv_pair_type(p_ij, p_ji)
+
+// =================
+// == Core Algorithm
+// =================
+
+// F: Base cases
+type f(bound i: usize, bound j: usize)
+rel f(i, i) = base(i, _)
+rel f(i, j) = f(i + 1, j) and i < MAX_LENGTH
+rel f(i, j) = range<usize>(i, j, k) and c(i, k) and f(k + 1, j)
+
+// C: Bond
+type c(bound i: usize, bound j: usize)
+rel c(i, j) = H(i, j) // base case: Hairpin
+rel c(i, j) = range<usize>(i, j, k) and range<usize>(k, j, l) and c(k, l) and I(i, j, k, l) // internal loop
+rel c(i, j) = range<usize>(i, j, k) and m(i + 1, k) and m1(k + 1, j - 1) and L(i, j) // multi loop
+
+// M: Multi Loop
+type m(bound i: usize, bound j: usize)
+rel m(i, j) = m(i, j - 1) and U(j, j)
+rel m(i, j) = range<usize>(i, j, k) and U(i, k) and c(k + 1, j) and P(k + 1, j) and k < MAX_LENGTH
+rel m(i, j) = range<usize>(i, j, k) and m(i, k) and c(k + 1, j) and P(k + 1, j) and k < MAX_LENGTH
+
+// M1: Base Multi Loop
+type m1(bound i: usize, bound j: usize)
+rel m1(i, j) = c(i, j) and P(i, j)
+rel m1(i, j) = m1(i, j - 1) and U(j, j)
+
+// =========
+// == Result
+// =========
+
+@goal rel minimum_free_energy() = len(n) and f(0, n - 1)
+query minimum_free_energy
+
+// =============================
+// == Thermodynamics Computation
+// =============================
+
+// Hairpin Score
+type H(bound i: usize, bound j: usize)
+
+// Hairpin:
+//   start   end
+//     |      |
+//    [i]----[j]
+//    /        \
+// [i+1]      [j-1]
+//   |          |
+//  ...        ...
+@demand("bbf")
+rel hairpin(i, j, p_ij) = pair(i, j, p_ij) and j > i + 3 and score_hairpin(j - i - 1)
+rel H(i, j) =
+  hairpin(i, j, p_ij) and base(i + 1, x_ip1) and base(j - 1, x_jm1) and score_mismatch_external(p_ij, x_ip1, x_jm1)
+
+// Single Loop Score, which accounts for helix stack, bulge, and internal loops
+type I(bound i: usize, bound j: usize, bound k: usize, bound l: usize)
+
+// Stack:
+//   start   end
+//     |      |
+//    [i]----[j]
+//     |      |
+//   [i+1]--[j-1]
+//     |      |
+//    ...    ...
+@demand("bbfbbf")
+rel stack(i, j, p_ij, i + 1, j - 1, p_lk) = pair(i, j, p_ij) and inv_pair(i + 1, j - 1, p_lk)
+rel I(i, j, k, l) = stack(i, j, p_ij, k, l, p_lk) and score_stack(p_ij, p_lk)
+
+// Bulge:
+//      RIGHT                 LEFT
+//   start   end          start   end
+//     |      |             |      |
+//    [i]----[j]           [i]----[j]
+//     |       \           /       |
+//     |      [j-1]     [i+1]      |
+//     |       ...       ...       |
+//     |       /           \       |
+//   [i+1]---[l]           [k]---[j-1]
+//     |      |             |      |
+//    ...    ...           ...    ...
+@demand("bbbbf")
+rel bulge_loop(i, j, i + 1, l, j - l - 1) = pair(i, j, _) and inv_pair(i + 1, l, _) and l + 1 < j
+rel bulge_loop(i, j, k, j - 1, k - i - 1) = pair(i, j, _) and inv_pair(k, j - 1, _) and i + 1 < k
+rel I(i, j, i + 1, l) = bulge_loop(i, j, k, l, len) and score_bulge(len)
+
+// 1x1 Loop
+//   start     end
+//     |        |
+//    [i]------[j]
+//    /          \
+// [i+1]        [j-1]
+//    \          /
+//  [i+1/k]--[j-2/l]
+//     |        |
+//    ...      ...
+@demand("bbff")
+rel loop_1x1(i, j, p_ij, p_lk) = pair(i, j, p_ij) and inv_pair(i + 2, j - 2, p_lk)
+@demand("bbbb")
+rel loop_1x1_score_helper(i, j, p_ij, p_lk) = base(i + 1, x_ip1) and base(j - 1, x_jm1) and score_int11(p_ij, p_lk, x_ip1, x_jm1)
+rel I(i, j, i + 2, j - 2) = loop_1x1(i, j, p_ij, p_lk) and loop_1x1_score_helper(i, j, p_ij, p_lk)
+
+// 2x1 Loop
+//     start     end
+//       |        |
+//      [i]------[j]
+//      /          \
+//   [i+1]          |
+//     |        [j-1/l+1]
+// [i+2/k-1]        |
+//      \          /
+//    [i+3/k]--[j-2/l]
+//       |       |
+//      ...     ...
+@demand("bbff")
+rel loop_2x1(i, j, p_ij, p_lk) = pair(i, j, p_ij) and inv_pair(i + 3, j - 2, p_lk)
+@demand("bbbb")
+rel loop_2x1_features(i, j, p_ij, p_lk) = base(i + 1, x_ip1) and base(i + 2, x_km1) and base(j - 1, x_lp1) and score_int21(p_lk, p_ij, x_lp1, x_ip1, x_km1)
+rel I(i, j, i + 3, j - 2) = loop_2x1(i, j, p_ij, p_lk) and loop_2x1_features(i, j, p_ij, p_lk)
+
+// 1x2 Loop
+//     start     end
+//       |        |
+//      [i]------[j]
+//      /          \
+//     |          [j-1]
+// [i+1/k-1]        |
+//     |        [j-2/l+1]
+//      \          /
+//    [i+2/k]--[j-3/l]
+//       |        |
+//      ...      ...
+@demand("bbff")
+rel loop_1x2(i, j, p_ij, p_lk) = pair(i, j, p_ij) and inv_pair(i + 2, j - 3, p_lk)
+@demand("bbbb")
+rel loop_1x2_features(i, j, p_ij, p_lk) = base(i + 1, x_ip1) and base(j - 2, x_lp1) and base(j - 1, x_jm1) and score_int21(p_ij, p_lk, x_ip1, x_lp1, x_jm1)
+rel I(i, j, i + 2, j - 3) = loop_1x2(i, j, p_ij, p_lk) and loop_1x2_features(i, j, p_ij, p_lk)
+
+// 1xn Loop / nx1 Loop (Both left and right)
+//   start   end
+//     |      |
+//    [i]----[j]
+//    /        \
+//   |        [j-1]
+// [i+1]       ...
+//   |        [l+1]
+//    \        /
+//  [i+2/k]--[l]
+//     |      |
+//    ...    ...
+@demand("bbfbbf")
+rel loop_1xn_or_nx1(i, j, p_ij, i + 2, l, p_lk) = pair(i, j, p_ij) and inv_pair(i + 2, l, p_lk) and j > l + 2 and score_internal(j - l) and score_ninio(j - l - 2)
+rel loop_1xn_or_nx1(i, j, p_ij, k, j - 2, p_lk) = pair(i, j, p_ij) and inv_pair(k, j - 2, p_lk) and k > i + 2 and score_internal(k - i) and score_ninio(k - i - 2)
+@demand("bbb")
+rel loop_1xn_score_helper(p_ij, i, j) = base(i + 1, x_ip1) and base(j - 1, x_jm1) and score_mismatch_internal_1n(p_ij, x_ip1, x_jm1)
+rel I(i, j, k, l) = loop_1xn_or_nx1(i, j, p_ij, k, l, p_lk) and loop_1xn_score_helper(p_ij, i, j) and loop_1xn_score_helper(p_lk, l, k)
+
+// 2x2 Loop
+//   start     end
+//     |        |
+//    [i]------[j]
+//    /          \
+// [i+1]        [j-1]
+//   |            |
+// [i+2]        [j-2]
+//    \          /
+//  [i+3/k]--[j-3/l]
+//     |        |
+//    ...      ...
+@demand("bbff")
+rel loop_2x2(i, j, p_ij, p_lk) = pair(i, j, p_ij) and inv_pair(i + 3, j - 3, p_lk)
+@demand("bbbb")
+rel loop_2x2_score(i, j, p_ij, p_lk) = base(i + 1, x_ip1) and base(i + 2, x_km1) and base(j - 2, x_lp1) and base(j - 1, x_jm1) and score_int22(p_ij, p_lk, x_ip1, x_km1, x_lp1, x_jm1)
+rel I(i, j, i + 3, j - 3) = loop_2x2(i, j, p_ij, p_lk) and loop_2x2_score(i, j, p_ij, p_lk)
+
+// 3x2 Loop or 2x3 Loop
+//   start     end
+//     |        |
+//    [i]------[j]
+//    /          \
+// [i+1]          |
+//   |          [j-1]
+// [i+2]          |
+//   |          [j-2]
+// [i+3]          |
+//    \          /
+//  [i+4/k]--[j-3/l]
+//     |        |
+//    ...      ...
+@demand("bbfbbf")
+rel loop_2x3_or_3x2(i, j, p_ij, i + 4, j - 3, p_lk) = pair(i, j, p_ij) and inv_pair(i + 4, j - 3, p_lk)
+rel loop_2x3_or_3x2(i, j, p_ij, i + 3, j - 4, p_lk) = pair(i, j, p_ij) and inv_pair(i + 3, j - 4, p_lk)
+@demand("bbb")
+rel loop_2x3_score_helper(p_ij, i, j) = base(i + 1, x_ip1) and base(j - 1, x_jm1) and score_mismatch_internal_23(p_ij, x_ip1, x_jm1)
+rel I(i, j, k, l) = loop_2x3_or_3x2(i, j, p_ij, k, l, p_lk) and loop_2x3_score_helper(p_ij, i, j) and loop_2x3_score_helper(p_lk, l, k) and score_internal(5) and score_ninio(1)
+
+// General Internal Loop
+//   start     end
+//     |        |
+//    [i]------[j]
+//    /          \
+//  ...(>2)      ...(>2)
+//    \          /
+//    [k]------[l]
+//     |        |
+//    ...      ...
+@demand("bbbbff")
+rel loop_general(i, j, k, l, p_ij, p_lk) =
+  pair(i, j, p_ij) and inv_pair(k, l, p_lk) and
+  l1 == (k - i - 1) as i32 and l2 == (j - l - 1) as i32 and l1 > 2 and l2 > 2 and
+  score_internal(l1 + l2) and score_ninio($abs(l1 - l2))
+@demand("bbb")
+rel loop_general_score_helper(p_ij, i, j) = base(i + 1, x_ip1) and base(j - 1, x_jm1) and score_mismatch_internal(p_ij, x_ip1, x_jm1)
+rel I(i, j, k, l) = loop_general(i, j, k, l, p_ij, p_lk) and loop_general_score_helper(p_ij, i, j) and loop_general_score_helper(p_lk, l, k)
+
+// Score of Multi Loop
+type L(bound i: usize, bound j: usize)
+rel L(i, j) =
+  pair(i, j, p_ij) and base(i + 1, x_ip1) and base(j - 1, x_jm1) and
+  score_mismatch_multi(p_ij, x_jm1, x_ip1) and
+  score_ml_intern() and score_ml_closing()
+
+// Score of dangle
+type P(bound i: usize, bound j: usize)
+rel P(i, j) =
+  len(n) and pair(i, j, p_ij) and i > 0 and j < n - 1 and
+  base(i - 1, x_im1) and base(j + 1, x_jp1) and
+  score_mismatch_multi(p_ij, x_im1, x_jp1) and score_ml_intern()
+rel P(0, j) =
+  len(n) and pair(0, j, p_ij) and j < n - 1 and base(j + 1, x_jp1) and
+  score_dangle3(p_ij, x_jp1) and score_ml_intern()
+rel P(i, n - 1) =
+  len(n) and pair(i, n - 1, p_ij) and i > 0 and base(i - 1, x_im1) and
+  score_dangle5(p_ij, x_im1) and score_ml_intern()
+rel P(0, n - 1) =
+  len(n) and pair(0, n - 1, _) and score_ml_intern()
+
+// Score of unpaired region
+type U(bound i: usize, bound j: usize)
+rel U(i, j) =
+  base(i, _) and base(j, _) and i <= j

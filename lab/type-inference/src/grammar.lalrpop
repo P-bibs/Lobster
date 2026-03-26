@@ -1,0 +1,826 @@
+use std::str::FromStr;
+
+use super::ast::*;
+
+grammar;
+
+match {
+  // Symbols
+  "=",
+  ":-",
+  ":=",
+  "(",
+  ")",
+  "[",
+  "]",
+  "{",
+  "}",
+  ";",
+  ":",
+  ",",
+  "|",
+  ".",
+  "<:",
+  "::",
+  "$",
+  "->",
+  "@",
+  "..",
+  "..=",
+
+  // Formula Operators
+  "/\\", // /\
+  "\\/", // \/
+  "~",
+  "=>",
+  "∃",
+  "∀",
+
+  // Expression Operators
+  "&&",
+  "||",
+  "^",
+  "==",
+  "!=",
+  "<",
+  ">",
+  ">=",
+  "<=",
+  "+",
+  "-",
+  "*",
+  "/",
+  "%",
+  "!",
+  "as",
+  "?",
+
+  // Operators Keyword
+  "bound",
+  "free",
+  "and",
+  "or",
+  "not",
+  "implies",
+  "where",
+  "if",
+  "then",
+  "else",
+  "exists",
+  "forall",
+  "in",
+  "case",
+  "is",
+  "new",
+
+  // Boolean keywords
+  "true",
+  "false",
+
+  // Wildcard
+  "_",
+
+  // Keywords
+  "import",
+  "type",
+  "const",
+  "rel",
+  "query",
+
+  // Literals
+  r"[a-zA-Z][a-zA-Z_0-9]*" => name,
+  r"-?[0-9]+" => int,
+  r"-?[0-9]+(\.[0-9]+)(e-?[0-9]+)?" => float,
+  r#""((?:[^"\\]|\\.)*)""# => single_quote_string,
+  r#""""(?:[^"\\]|\\.|"[^"]|""[^"])*""""# => triple_quote_string,
+  r#"s"[^"]*""# => symbol_string,
+  r#"t"[^"]*""# => date_time_string,
+  r#"d"[^"]*""# => duration_string,
+  r#"'[^']*'"# => character,
+
+  // Comments and Whitespaces
+  r"[ \n\r]*" => { },
+  r"//[^\n\r]*[\n\r]*" => { },
+  r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => { },
+}
+
+// Helpers
+
+Separated<E, S>: Vec<E> = {
+  <rs: (<E> S)*> <e: E?> => rs.into_iter().chain(e.into_iter()).collect()
+}
+
+SeparatedStrict<E, S>: Vec<E> = {
+  <rs: (<E> S)*> <e: E> => rs.into_iter().chain(vec![e].into_iter()).collect()
+}
+
+AtLeastOneSeparated<E, S>: Vec<E> = {
+  <r1: E> => vec![r1],
+  <r1: E> <rs: (S <E>)+> S? => vec![vec![r1], rs].concat(),
+}
+
+AtLeastOneSeparatedStrict<E, S>: Vec<E> = {
+  <r1: E> => vec![r1],
+  <r1: E> <rs: (S <E>)+> => vec![vec![r1], rs].concat(),
+}
+
+AtLeastTwoSeparated<E, S>: Vec<E> = {
+  <r1: E> <rs: (S <E>)+> S? => vec![vec![r1], rs].concat(),
+}
+
+AtLeastTwoSeparatedStrict<E, S>: Vec<E> = {
+  <r1: E> <rs: (S <E>)+> => vec![vec![r1], rs].concat(),
+}
+
+SpannedStruct<T>: AstStructNode<T> = {
+  <start: @L> <t: T> <end: @R> => t.with_span(start, end)
+}
+
+SpannedEnum<T>: AstEnumNode<T> = {
+  <start: @L> <t: T> <end: @R> => t.with_span(start, end)
+}
+
+// Attributes
+
+AttributeArgValueList = SpannedStruct<_AttributeArgValueList>;
+_AttributeArgValueList: _AttributeArgValueList = {
+  "[" <args: Separated<AttributeArgValue, ",">> "]" => _AttributeArgValueList::new(args),
+}
+
+AttributeArgValueTuple = SpannedStruct<_AttributeArgValueTuple>;
+_AttributeArgValueTuple: _AttributeArgValueTuple = {
+  "(" <args: Separated<AttributeArgValue, ",">> ")" => _AttributeArgValueTuple::new(args),
+}
+
+AttributeDictField = SpannedStruct<_AttributeDictField>;
+_AttributeDictField: _AttributeNamedArgValue = {
+  <kw: Ident> ":" <v: AttributeArgValue> => _AttributeNamedArgValue::new(kw, v),
+}
+
+AttributeArgValueDict = SpannedStruct<_AttributeArgValueDict>;
+_AttributeArgValueDict: _AttributeArgValueDict = {
+  "{" <args: Separated<AttributeDictField, ",">> ")" => _AttributeArgValueDict::new(args),
+}
+
+AttributeArgValue: AttributeArgValue = {
+  Constant => AttributeArgValue::Constant(<>),
+  AttributeArgValueList => AttributeArgValue::List(<>),
+  AttributeArgValueTuple => AttributeArgValue::Tuple(<>),
+  AttributeArgValueDict => AttributeArgValue::Dict(<>),
+}
+
+AttributeKeywordArg = SpannedStruct<_AttributeKeywordArg>;
+_AttributeKeywordArg: _AttributeNamedArgValue = {
+  <kw: Ident> "=" <v: AttributeArgValue> => _AttributeNamedArgValue::new(kw, v),
+}
+
+AttributeArg: AttributeArg = {
+  AttributeArgValue => AttributeArg::Pos(<>),
+  AttributeKeywordArg => AttributeArg::Kw(<>),
+}
+
+AttributeArgs = AttributeArg*;
+
+Attribute = SpannedStruct<_Attribute>;
+_Attribute: _Attribute = {
+  "@" <name: Ident> => _Attribute::new(name, vec![]),
+  "@" <name: Ident> "(" <args: AttributeArgs> ")" => _Attribute::new(name, args),
+}
+
+Attributes = Attribute*;
+
+// Item & Decl
+
+pub Items = Item*;
+
+pub Item = SpannedStruct<_Item>;
+_Item: _Item = <attrs: Attributes> <decl: Decl> => _Item::new(attrs, decl);
+
+Decl: Decl = {
+  ImportDecl => Decl::Import(<>),
+  TypeDecl => Decl::Type(<>),
+  ConstDecl => Decl::Const(<>),
+  RelationDecl => Decl::Relation(<>),
+}
+
+// Import Decl
+
+ImportDecl = SpannedStruct<_ImportDecl>;
+_ImportDecl: _ImportDecl = {
+  "import" <s: StringLiteral> => _ImportDecl::new(s),
+}
+
+// Type Decl
+
+TypeDecl: TypeDecl = {
+  AliasTypeDecl => TypeDecl::Alias(<>),
+  StructTypeDecl => TypeDecl::Struct(<>),
+  AlgebraicDataTypeDecl => TypeDecl::Algebraic(<>),
+  RelationTypeDecl => TypeDecl::Relation(<>),
+}
+
+AliasTypeDecl = SpannedStruct<_AliasTypeDecl>;
+_AliasTypeDecl: _AliasTypeDecl = {
+  "type" <left: Type> "=" <right: Type> => {
+    _AliasTypeDecl::new(left, right)
+  }
+}
+
+StructTypeDecl = SpannedStruct<_StructTypeDecl>;
+_StructTypeDecl: _StructTypeDecl = {
+  "type" <left: Type> "{" <fields: AtLeastOneSeparated<TypeDeclStructField, ",">> "}" => {
+    _StructTypeDecl::new(left, fields)
+  }
+}
+
+AlgebraicDataTypeDecl = SpannedStruct<_AlgebraicDataTypeDecl>;
+_AlgebraicDataTypeDecl: _AlgebraicDataTypeDecl = {
+  "type" <left: Type> "=" <variants: AtLeastTwoSeparatedStrict<AlgebraicDataTypeVariant, "|">> => {
+    _AlgebraicDataTypeDecl::new(left, variants)
+  }
+}
+
+AlgebraicDataTypeVariant: AlgebraicDataTypeVariant = {
+  Ident => AlgebraicDataTypeVariant::Const(<>),
+  AlgebraicDataTypeTupleVariant => AlgebraicDataTypeVariant::Tuple(<>),
+  AlgebraicDataTypeStructVariant => AlgebraicDataTypeVariant::Struct(<>),
+}
+
+AlgebraicDataTypeTupleVariant = SpannedStruct<_AlgebraicDataTypeTupleVariant>;
+_AlgebraicDataTypeTupleVariant: _AlgebraicDataTypeTupleVariant = {
+  <n: Ident> "(" <args: AtLeastOneSeparated<Type, ",">> ")" => {
+    _AlgebraicDataTypeTupleVariant::new(n, args)
+  },
+}
+
+TypeDeclStructField = SpannedStruct<_TypeDeclStructField>;
+_TypeDeclStructField: _TypeDeclStructField = {
+  <n: Ident> ":" <ty: Type> => _TypeDeclStructField::new(n, ty),
+}
+
+AlgebraicDataTypeStructVariant = SpannedStruct<_AlgebraicDataTypeStructVariant>;
+_AlgebraicDataTypeStructVariant: _AlgebraicDataTypeStructVariant = {
+  <n: Ident> "{" <args: AtLeastOneSeparated<TypeDeclStructField, ",">> "}" => {
+    _AlgebraicDataTypeStructVariant::new(n, args)
+  },
+}
+
+Adornment = SpannedEnum<_Adornment>;
+_Adornment: _Adornment = {
+  "bound" => _Adornment::Bound,
+  "free" => _Adornment::Free,
+}
+
+RelationTypeArg = SpannedStruct<_RelationTypeArg>;
+_RelationTypeArg: _RelationTypeArg = {
+  <a: Adornment?> <n: Ident> ":" <t: Type> => _RelationTypeArg::new(a, Some(n), t),
+  <a: Adornment?> <t: Type> => _RelationTypeArg::new(a, None, t),
+}
+
+RelationTypeDecl = SpannedStruct<_RelationTypeDecl>;
+_RelationTypeDecl: _RelationTypeDecl = {
+  "type" <p: Predicate> "(" <args: Separated<RelationTypeArg, ",">> ")" => {
+    _RelationTypeDecl::new(p, vec![], args)
+  }
+}
+
+// Constant Decl
+
+ConstDecl = SpannedStruct<_ConstDecl>;
+_ConstDecl: _ConstDecl = {
+  "const" <n: Ident> ":" <t: Type> "=" <e: Expr> => {
+    _ConstDecl::new(n, Some(t), e)
+  },
+  "const" <n: Ident> "=" <e: Expr> => {
+    _ConstDecl::new(n, None, e)
+  }
+}
+
+// Relation Decl
+
+RelationDecl: RelationDecl = {
+  FactDecl => RelationDecl::Fact(<>),
+  SetDecl => RelationDecl::Set(<>),
+  RuleDecl => RelationDecl::Rule(<>),
+}
+
+FactDecl = SpannedStruct<_FactDecl>;
+_FactDecl: _FactDecl = {
+  "rel" <t: Tag> "::" <a: Atom> => {
+    _FactDecl::new(Some(t), a)
+  },
+  "rel" <a: Atom> => {
+    _FactDecl::new(None, a)
+  },
+}
+
+ConstTuple: Vec<Expr> = {
+  <c: Constant> => vec![Expr::Constant(c)],
+  <v: Ident> => vec![Expr::Variable(v)],
+  <e: Entity> => vec![Expr::Entity(e)],
+  "(" <es: Separated<Expr, ",">> ")" => es,
+}
+
+SetTuple = SpannedStruct<_SetTuple>;
+_SetTuple: _SetTuple = {
+  <t: Tag> "::" <c: ConstTuple> => _SetTuple::new(Some(t), c),
+  <c: ConstTuple> => _SetTuple::new(None, c),
+}
+
+SetDecl = SpannedStruct<_SetDecl>;
+_SetDecl: _SetDecl = {
+  "rel" <p: Predicate> "=" "{" <es: Separated<SetTuple, ",">> "}" => {
+    _SetDecl::new(p, false, es)
+  },
+  "rel" <p: Predicate> "=" "{" <es: AtLeastTwoSeparated<SetTuple, ";">> "}" => {
+    _SetDecl::new(p, true, es)
+  },
+}
+
+MultiHead = SpannedStruct<_MultiHead>;
+_MultiHead: _MultiHead = {
+  "{" <atoms: AtLeastTwoSeparated<Atom, ",">> "}" => {
+    _MultiHead::new(atoms, false)
+  },
+  "{" <atoms: AtLeastTwoSeparated<Atom, ";">> "}" => {
+    _MultiHead::new(atoms, true)
+  },
+}
+
+RuleHead: RuleHead = {
+  Atom => RuleHead::Single(<>),
+  MultiHead => RuleHead::Multi(<>),
+}
+
+RuleSymbol = {"=", ":-"}
+
+RuleDecl = SpannedStruct<_RuleDecl>;
+_RuleDecl: _RuleDecl = {
+  "rel" <h: RuleHead> RuleSymbol <b: Formula> => {
+    _RuleDecl::new(h, b)
+  }
+}
+
+// Formula & Expression
+
+Atom = SpannedStruct<_Atom>;
+_Atom: _Atom = {
+  <p: Predicate> "(" <args: Separated<Expr, ",">> ")" => {
+    _Atom::new(p, args)
+  },
+}
+
+Formula = FImpliesFormula;
+
+LeftAssocBinaryFormula<Op, NextTier> = SpannedStruct<_LeftAssocBinaryFormula<Op, NextTier>>;
+_LeftAssocBinaryFormula<Op, NextTier>: _BinaryFormula = {
+  <op1: FLeftAssocBinaryFormula<Op, NextTier>> <op: Op> <op2: NextTier> => {
+    _BinaryFormula::new(op, Box::new(op1), Box::new(op2))
+  }
+};
+
+FLeftAssocBinaryFormula<Op, NextTier>: Formula = {
+  <b: LeftAssocBinaryFormula<Op, NextTier>> => Formula::Binary(b),
+  NextTier,
+};
+
+RightAssocBinaryFormula<Op, NextTier> = SpannedStruct<_RightAssocBinaryFormula<Op, NextTier>>;
+_RightAssocBinaryFormula<Op, NextTier>: _BinaryFormula = {
+  <op1: NextTier> <op: Op> <op2: FRightAssocBinaryFormula<Op, NextTier>> => {
+    _BinaryFormula::new(op, Box::new(op1), Box::new(op2))
+  }
+};
+
+FRightAssocBinaryFormula<Op, NextTier>: Formula = {
+  RightAssocBinaryFormula<Op, NextTier> => Formula::Binary(<>),
+  NextTier,
+};
+
+ImpliesOp = SpannedEnum<_ImpliesOp>;
+_ImpliesOp: _BinaryFormulaOp = {
+  "=>" => _BinaryFormulaOp::Implies,
+  "implies" => _BinaryFormulaOp::Implies,
+}
+
+FImpliesFormula = FRightAssocBinaryFormula<ImpliesOp, FOrFormula>;
+
+OrOp = SpannedEnum<_OrOp>;
+_OrOp: _BinaryFormulaOp = {
+  "\\/" => _BinaryFormulaOp::Or,
+  "or" => _BinaryFormulaOp::Or,
+  // ";" => _BinaryFormulaOp::Or,
+}
+
+FOrFormula = FLeftAssocBinaryFormula<OrOp, FAndFormula>;
+
+AndOp = SpannedEnum<_AndOp>;
+_AndOp: _BinaryFormulaOp = {
+  "/\\" => _BinaryFormulaOp::And,
+  "and" => _BinaryFormulaOp::And,
+  // "," => _BinaryFormulaOp::And,
+}
+
+FAndFormula = FLeftAssocBinaryFormula<AndOp, FConstraintFormula>;
+
+FConstraintFormula: Formula = {
+  Constraint => Formula::Constraint(<>),
+  FUnaryFormula,
+}
+
+UnaryFormulaOp = SpannedEnum<_UnaryFormulaOp>;
+_UnaryFormulaOp: _UnaryFormulaOp = {
+  "not" => _UnaryFormulaOp::Not,
+  "~" => _UnaryFormulaOp::Not,
+}
+
+UnaryFormula = SpannedStruct<_UnaryFormula>;
+_UnaryFormula: _UnaryFormula = {
+  <op: UnaryFormulaOp> <op1: UnitFormula> => {
+    _UnaryFormula::new(op, Box::new(op1))
+  }
+}
+
+FUnaryFormula: Formula = {
+  UnaryFormula => Formula::Unary(<>),
+  UnitFormula,
+}
+
+ComplexFormula: Formula = {
+  RightAssocBinaryFormula<ImpliesOp, FOrFormula> => Formula::Binary(<>),
+  LeftAssocBinaryFormula<OrOp, FAndFormula> => Formula::Binary(<>),
+  LeftAssocBinaryFormula<AndOp, FUnaryFormula> => Formula::Binary(<>),
+  UnaryFormula => Formula::Unary(<>),
+}
+
+CaseIs = SpannedStruct<_CaseIs>;
+_CaseIs: _CaseIs = {
+  "case" <var: Ident> "is" <cases: AtLeastOneSeparatedStrict<Entity, "|">> => {
+    _CaseIs::new(var, cases)
+  },
+}
+
+AggregateLeftVars: Vec<Ident> = {
+  <n: Ident> ":=" => vec![n],
+  "(" <ns: AtLeastTwoSeparated<Ident, ",">> ")" ":=" => ns,
+}
+
+AggregatorTypeParams: Vec<Type> = {
+  () => vec![],
+  "<" <ts: AtLeastOneSeparated<Type, ",">> ">" => ts,
+}
+
+AggregatorBracketArgs: Vec<Expr> = {
+  () => vec![],
+  "[" <es: AtLeastOneSeparatedStrict<Expr, ",">> "]" => es,
+}
+
+Aggregator = SpannedStruct<_Aggregator>;
+_Aggregator: _Aggregator = {
+  <agg: Ident> <type_params: AggregatorTypeParams> <bracket_args: AggregatorBracketArgs> <exc: "!"?> => {
+    _Aggregator::new(agg, type_params, bracket_args, exc.is_some())
+  }
+}
+
+BindingFormula = SpannedStruct<_BindingFormula>;
+_BindingFormula: _BindingFormula = {
+  <vs: AtLeastOneSeparatedStrict<BindingVarGroup, ";">> ":" <f: Formula> => {
+    _BindingFormula::new(vs, Box::new(f))
+  }
+}
+
+BindingVarGroup = SpannedStruct<_BindingVarGroup>;
+_BindingVarGroup: _BindingVarGroup = {
+  AtLeastOneSeparatedStrict<IdentOrWildcard, ","> => {
+    _BindingVarGroup::new(<>)
+  }
+}
+
+ExistsOp = {"exists", "∃"}
+
+ForallOp = {"forall", "∀"}
+
+ExistsForall = SpannedStruct<_ExistsForall>;
+_ExistsForall: _Aggregator = {
+  <s: @L> ExistsOp <e: @R> <exc: "!"?> => {
+    _Aggregator::new(_Ident::new("exists".to_string()).with_span(s, e), vec![], vec![], exc.is_some())
+  },
+  <s: @L> ForallOp <e: @R> <exc: "!"?> => {
+    _Aggregator::new(_Ident::new("forall".to_string()).with_span(s, e), vec![], vec![], exc.is_some())
+  },
+}
+
+Aggregate = SpannedStruct<_Aggregate>;
+_Aggregate: _Aggregate = {
+  <agg: ExistsForall> "(" <body: BindingFormula> ")" => {
+    _Aggregate::new(vec![], agg, body, None)
+  },
+  <agg: ExistsForall> "(" <body: BindingFormula> "where" <where_body: BindingFormula> ")" => {
+    _Aggregate::new(vec![], agg, body, Some(where_body))
+  },
+  <left: AggregateLeftVars> <agg: Aggregator> "(" <body: BindingFormula> ")" => {
+    _Aggregate::new(left, agg, body, None)
+  },
+  <left: AggregateLeftVars> <agg: Aggregator> "(" <body: BindingFormula> "where" <where_body: BindingFormula> ")" => {
+    _Aggregate::new(left, agg, body, Some(where_body))
+  },
+}
+
+Range = SpannedStruct<_Range>;
+_Range: _Range = {
+  <v: Ident> "in" <b: Expr> ":" <e: Expr> => {
+    _Range::new(v, Box::new(b), Box::new(None), Box::new(e), None)
+  },
+  <v: Ident> "in" <b: Expr> ":" <s: Expr> ":" <e: Expr> => {
+    _Range::new(v, Box::new(b), Box::new(Some(s)), Box::new(e), None)
+  },
+}
+
+Constraint: Expr = {
+  NonAssocBinaryExpr<CmpOp, EPlusMinusExpr> => Expr::Binary(<>),
+  // BinaryExpr<MulDivModOp, UnitExpr> => Expr::Binary(<>),
+}
+
+UnitFormula: Formula = {
+  "(" <f: ComplexFormula> ")" => f,
+  Atom => Formula::Atom(<>),
+  CaseIs => Formula::CaseIs(<>),
+  Range => Formula::Range(<>),
+  Aggregate => Formula::Aggregate(<>),
+}
+
+Expr = EIfThenElseExpr;
+
+IfThenElseExpr = SpannedStruct<_IfThenElseExpr>;
+_IfThenElseExpr: _IfThenElseExpr = {
+  "if" <cond: ECastExpr> "then" <then_br: ECastExpr> "else" <else_br: ECastExpr> => {
+    _IfThenElseExpr::new(Box::new(cond), Box::new(then_br), Box::new(else_br))
+  }
+}
+
+EIfThenElseExpr: Expr = {
+  IfThenElseExpr => Expr::IfThenElse(<>),
+  ECastExpr,
+}
+
+CastExpr = SpannedStruct<_CastExpr>;
+_CastExpr: _CastExpr = {
+  <e: EAndOrXorExpr> "as" <t: Type> => _CastExpr::new(Box::new(e), t),
+}
+
+ECastExpr: Expr = {
+  CastExpr => Expr::Cast(<>),
+  EAndOrXorExpr,
+};
+
+LeftAssocBinaryExpr<Op, NextTier> = SpannedStruct<_LeftAssocBinaryExpr<Op, NextTier>>;
+_LeftAssocBinaryExpr<Op, NextTier>: _BinaryExpr = {
+  <op1: LeftAssocBinaryExpr<Op, NextTier>> <op: Op> <op2: NextTier> => {
+    _BinaryExpr::new(op, Box::new(op1), Box::new(op2))
+  }
+}
+
+ELeftAssocBinaryExpr<Op, NextTier>: Expr = {
+  <b: LeftAssocBinaryExpr<Op, NextTier>> => Expr::Binary(b),
+  NextTier,
+};
+
+NonAssocBinaryExpr<Op, NextTier> = SpannedStruct<_NonAssocBinaryExpr<Op, NextTier>>;
+_NonAssocBinaryExpr<Op, NextTier>: _BinaryExpr = {
+  <op1: NextTier> <op: Op> <op2: NextTier> => {
+    _BinaryExpr::new(op, Box::new(op1), Box::new(op2))
+  }
+}
+
+ENonAssocBinaryExpr<Op, NextTier>: Expr = {
+  <b: NonAssocBinaryExpr<Op, NextTier>> => Expr::Binary(b),
+  NextTier,
+};
+
+AndOrXorOp = SpannedEnum<_AndOrXorOp>;
+_AndOrXorOp: _BinaryOp = {
+  "&&" => _BinaryOp::And,
+  "||" => _BinaryOp::Or,
+  "^" => _BinaryOp::Xor,
+}
+
+EAndOrXorExpr = ELeftAssocBinaryExpr<AndOrXorOp, ECmpExpr>;
+
+CmpOp = SpannedEnum<_CmpOp>;
+_CmpOp: _BinaryOp = {
+  "==" => _BinaryOp::Eq,
+  "!=" => _BinaryOp::Neq,
+  ">" => _BinaryOp::Gt,
+  "<" => _BinaryOp::Lt,
+  ">=" => _BinaryOp::Geq,
+  "<=" => _BinaryOp::Leq,
+}
+
+ECmpExpr = ENonAssocBinaryExpr<CmpOp, EPlusMinusExpr>;
+
+PlusMinusOp = SpannedEnum<_PlusMinusOp>;
+_PlusMinusOp: _BinaryOp = {
+  "+" => _BinaryOp::Add,
+  "-" => _BinaryOp::Sub,
+}
+
+EPlusMinusExpr = ELeftAssocBinaryExpr<PlusMinusOp, EMulDivModExpr>;
+
+MulDivModOp = SpannedEnum<_MulDivModOp>;
+_MulDivModOp: _BinaryOp = {
+  "*" => _BinaryOp::Mul,
+  "/" => _BinaryOp::Div,
+  "%" => _BinaryOp::Modulo,
+}
+
+EMulDivModExpr = ELeftAssocBinaryExpr<MulDivModOp, EUnaryExpr>;
+
+UnaryOp = SpannedEnum<_UnaryOp>;
+_UnaryOp: _UnaryOp = {
+  "!" => _UnaryOp::Not,
+  "+" => _UnaryOp::Pos,
+  "-" => _UnaryOp::Neg,
+}
+
+UnaryExpr = SpannedStruct<_UnaryExpr>;
+_UnaryExpr: _UnaryExpr = {
+  <o: UnaryOp> <e: EUnaryExpr> => {
+    _UnaryExpr::new(o, Box::new(e))
+  }
+}
+
+EUnaryExpr: Expr = {
+  <u: UnaryExpr> => Expr::Unary(u),
+  UnitExpr,
+}
+
+Entity: Entity = {
+  TupleEntity => Entity::Tuple(<>),
+  StructEntity => Entity::Struct(<>),
+}
+
+TupleEntity = SpannedStruct<_TupleEntity>;
+_TupleEntity: _TupleEntity = {
+  <c: Ident> "(" <args: Separated<Expr, ",">> ")" => {
+    _TupleEntity::new(c, args)
+  }
+}
+
+StructEntity = SpannedStruct<_StructEntity>;
+_StructEntity: _StructEntity = {
+  <c: Ident> "{" <args: Separated<StructEntityArg, ",">> "}" => {
+    _StructEntity::new(c, args)
+  }
+}
+
+StructEntityArg = SpannedStruct<_StructEntityArg>;
+_StructEntityArg: _StructEntityArg = {
+  <n: Ident> ":" <v: Expr> => {
+    _StructEntityArg::new(n, v)
+  }
+}
+
+ComplexExpr: Expr = {
+  CastExpr => Expr::Cast(<>),
+  UnaryExpr => Expr::Unary(<>),
+  LeftAssocBinaryExpr<AndOrXorOp, ECmpExpr> => Expr::Binary(<>),
+  NonAssocBinaryExpr<CmpOp, EPlusMinusExpr> => Expr::Binary(<>),
+  LeftAssocBinaryExpr<PlusMinusOp, EMulDivModExpr> => Expr::Binary(<>),
+  LeftAssocBinaryExpr<MulDivModOp, EUnaryExpr> => Expr::Binary(<>),
+}
+
+UnitExpr: Expr = {
+  "(" <e: ComplexExpr> ")" => e,
+  // Entity => Expr::Entity(<>),
+  Constant => Expr::Constant(<>),
+  Ident => Expr::Variable(<>),
+  Wildcard => Expr::Wildcard(<>),
+}
+
+// Basics
+
+Type = SpannedStruct<_Type>;
+_Type: _Type = {
+  <n: Ident> => _Type::new(n, vec![]),
+  <n: Ident> "<" <args: AtLeastOneSeparated<Type, ",">> ">" => _Type::new(n, args),
+}
+
+Tag: Tag = {
+  FloatLiteral => Tag::Probability(<>),
+  BoolLiteral => Tag::Boolean(<>),
+  IntegerLiteral => Tag::Natural(<>),
+}
+
+Predicate = SpannedStruct<_Predicate>;
+_Predicate: _Predicate = {
+  <n: Ident> => _Predicate::new(n, vec![]),
+  <n: Ident> "<" <ps: AtLeastOneSeparated<Type, ",">> ">" => _Predicate::new(n, ps),
+}
+
+Wildcard = SpannedStruct<_Wildcard>;
+_Wildcard: _Wildcard = "_" => _Wildcard::new();
+
+Ident = SpannedStruct<_Ident>;
+_Ident: _Ident = <n: name> => _Ident::new(n.to_string());
+
+IdentOrWildcard: IdentOrWildcard = {
+  Ident => IdentOrWildcard::Ident(<>),
+  Wildcard => IdentOrWildcard::Wildcard(<>),
+}
+
+IntegerLiteral = SpannedStruct<_IntegerLiteral>;
+_IntegerLiteral: _IntegerLiteral = {
+  int => {
+    let v = i64::from_str(<>).unwrap();
+    _IntegerLiteral::new(v)
+  }
+}
+
+FloatLiteral = SpannedStruct<_FloatLiteral>;
+_FloatLiteral: _FloatLiteral = {
+  float => {
+    let v = f64::from_str(<>).unwrap();
+    _FloatLiteral::new(v)
+  }
+}
+
+BoolLiteral = SpannedStruct<_BoolLiteral>;
+_BoolLiteral: _BoolLiteral = {
+  "true" => _BoolLiteral::new(true),
+  "false" => _BoolLiteral::new(false),
+}
+
+CharLiteral = SpannedStruct<_CharLiteral>;
+_CharLiteral: _CharLiteral = {
+  <s: character> => {
+    let string = s[1..s.len() - 1]
+      .replace("\\t", "\t")
+      .replace("\\n", "\n")
+      .replace("\\'", "'")
+      .replace("\\\\", "\\")
+      .into();
+    _CharLiteral::new(string)
+  }
+}
+
+StringLiteral = SpannedStruct<_StringLiteral>;
+_StringLiteral: _StringLiteral = {
+  <s: single_quote_string> => {
+    let string = s[1..s.len() - 1]
+      .replace("\\t", "\t")
+      .replace("\\r", "\r")
+      .replace("\\n", "\n")
+      .replace("\\0", "\0")
+      .replace("\\\"", "\"")
+      .replace("\\\'", "\'")
+      .replace("\\\\", "\\")
+      .into();
+    _StringLiteral::new(string)
+  },
+  <s: triple_quote_string> => {
+    let string = s[3..s.len() - 3]
+      .replace("\\t", "\t")
+      .replace("\\r", "\r")
+      .replace("\\n", "\n")
+      .replace("\\0", "\0")
+      .replace("\\\"", "\"")
+      .replace("\\\'", "\'")
+      .replace("\\\\", "\\")
+      .into();
+    _StringLiteral::new(string)
+  }
+}
+
+SymbolLiteral = SpannedStruct<_SymbolLiteral>;
+_SymbolLiteral: _SymbolLiteral = {
+  <s: symbol_string> => {
+    let string = s[2..s.len() - 1].into();
+    _SymbolLiteral::new(string)
+  }
+}
+
+DateTimeLiteral = SpannedStruct<_DateTimeLiteral>;
+_DateTimeLiteral: _DateTimeLiteral = {
+  <s: date_time_string> => {
+    let string = s[2..s.len() - 1].into();
+    _DateTimeLiteral::new(string)
+  }
+}
+
+DurationLiteral = SpannedStruct<_DurationLiteral>;
+_DurationLiteral: _DurationLiteral = {
+  <s: duration_string> => {
+    let string = s[2..s.len() - 1].into();
+    _DurationLiteral::new(string)
+  }
+}
+
+Constant: Constant = {
+  IntegerLiteral => Constant::Integer(<>),
+  FloatLiteral => Constant::Float(<>),
+  BoolLiteral => Constant::Bool(<>),
+  CharLiteral => Constant::Char(<>),
+  StringLiteral => Constant::String(<>),
+  SymbolLiteral => Constant::Symbol(<>),
+  DateTimeLiteral => Constant::DateTime(<>),
+  DurationLiteral => Constant::Duration(<>),
+}

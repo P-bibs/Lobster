@@ -1,0 +1,27 @@
+import "../scallop/infer_structure.scl"
+
+// RNA
+rel rna("AAGAACCACUAGGGGAGCCAUCUGGCUGAGAAAAGCGCUGCUUUGACCCUUUGAACCUGAUCUGGCUUGUACCAGCGUAGGGAAGUGGAGAACAAUUGCU")
+rel nucleotide(i, n) = rna(rna) and string_chars(rna, i, nc) and char_to_nucleotide(nc, n)
+rel length($string_length(rna)) = rna(rna)
+
+// AAGAACCACUAGGGGAGCCAUCUGGCUGAGAAAAGCGCUGCUUUGACCCUUUGAACCUGAUCUGGCUUGUACCAGCGUAGGGAAGUGGAGAACAAUUGCU
+// .....(((((((((..((((..)))).....((((((.))))))..)))).....((((..((((......))))..))))..)))))............
+// 0         1         2         3         4         5         6         7         8         9
+// 0123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789
+rel token = {
+  (0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 0), (6, 0), (7, 0), (8, 0), (9, 2), (10, 0), (11, 0), (12, 0), (13, 2), (14, 4), (15, 4), (16, 0), (17, 0), (18, 0), (19, 2), (20, 4), (21, 4), (22, 3), (23, 1), (24, 1), (25, 1), (26, 4), (27, 4), (28, 4), (29, 4), (30, 4), (31, 0), (32, 0), (33, 0), (34, 0), (35, 0), (36, 2), (37, 4), (38, 3), (39, 1), (40, 1), (41, 1), (42, 1), (43, 1), (44, 4), (45, 4), (46, 3), (47, 1), (48, 1), (49, 1), (50, 4), (51, 4), (52, 4), (53, 4), (54, 4), (55, 0), (56, 0), (57, 0), (58, 2), (59, 4), (60, 4), (61, 0), (62, 0), (63, 0), (64, 2), (65, 4), (66, 4), (67, 4), (68, 4), (69, 4), (70, 4), (71, 3), (72, 1), (73, 1), (74, 1), (75, 4), (76, 4), (77, 3), (78, 1), (79, 1), (80, 1), (81, 4), (82, 4), (83, 3), (84, 1), (85, 1), (86, 1), (87, 1), (88, 5), (89, 5), (90, 5), (91, 5), (92, 5), (93, 5), (94, 5), (95, 5), (96, 5), (97, 5), (98, 5), (99, 5)
+}
+
+query pair
+// query intern_loop
+// query nucleotide_pair
+// query unpaired
+// query well_formed
+// query intern_loop_unpaired
+query helix_stack
+
+// AAGAACCACUAGGGGAGCCAUCUGGCUGAGAAAAGCGCUGCUUUGACCCUUUGAACCUGAUCUGGCUUGUACCAGCGUAGGGAAGUGGAGAACAAUUGCU
+// .....(((((((((..((((..)))).....((((((.))))))..)))).....((((..((((......))))..))))..)))))............
+// 0123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789
+// 0         1         2         3         4         5         6         7         8         9

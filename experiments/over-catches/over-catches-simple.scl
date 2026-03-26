@@ -1,0 +1,130 @@
+rel icfg_edge(X, Y, Ctx, Ctx) :- cfg_edge(X, Y, Ctx)
+rel icfg_edge(CallSite, Callee, Caller, Callee) :- calls(Caller, Callee, CallSite)
+rel icfg_edge(Retsite, Y, Caller, Callee) :-
+    calls(Caller, Callee, Callsite),
+    returns(Callee, Retsite),
+    cfg_edge(Callsite, Y, Caller)
+
+type icfg_path(bound X: u32, Y: u32, bound XCtx: u32, YCtx: u32)
+rel icfg_path(X, Y, XCtx, YCtx) :- icfg_edge(X, Y, XCtx, YCtx)
+rel icfg_path(X, Y, XCtx, YCtx) :-
+    icfg_edge(X, Z, XCtx, InterCtx),
+    icfg_path(Z, Y, InterCtx, YCtx)
+
+rel prob_icfg_edge(X, Y, Ctx, Ctx) :- prob_cfg_edge(X, Y, Ctx)
+rel prob_icfg_edge(CallSite, Callee, Caller, Callee) :- calls(Caller, Callee, CallSite)
+rel prob_icfg_edge(Retsite, Y, Caller, Callee) :-
+    calls(Caller, Callee, Callsite),
+    returns(Callee, Retsite),
+    prob_cfg_edge(Callsite, Y, Caller)
+
+type prob_icfg_path(bound X: u32, Y: u32, bound XCtx: u32, YCtx: u32)
+rel prob_icfg_path(X, Y, XCtx, YCtx) :- prob_icfg_edge(X, Y, XCtx, YCtx)
+rel prob_icfg_path(X, Y, XCtx, YCtx) :-
+    prob_icfg_edge(X, Z, XCtx, InterCtx),
+    prob_icfg_path(Z, Y, InterCtx, YCtx)
+
+rel icfg_ctx_insensitive_edge(X, Y) :- cfg_edge(X, Y, _)
+rel icfg_ctx_insensitive_edge(X, Y) :- calls(_, Y, X)
+rel icfg_ctx_insensitive_edge(X, Y) :-
+    calls(_, Callee, Callsite),
+    returns(Callee, X),
+    cfg_edge(Callsite, Y, _)
+
+type icfg_ctx_insensitive_path(bound X: u32, Y: u32)
+rel icfg_ctx_insensitive_path(X, Y) :- icfg_ctx_insensitive_edge(X, Y)
+rel icfg_ctx_insensitive_path(X, Y) :- 
+    icfg_ctx_insensitive_edge(X, Z), 
+    icfg_ctx_insensitive_path(Z, Y)
+
+type on_any_icfg_path(bound Z: u32, bound X: u32, bound Y: u32)
+rel on_any_icfg_path(Z, X, Y) :- 
+    icfg_ctx_insensitive_path(X,Z), 
+    icfg_ctx_insensitive_path(Z,Y)
+
+//rel on_any_icfg_path(2, 4, 5) :- 
+//    icfg_ctx_insensitive_path(4,2), 
+//    icfg_ctx_insensitive_path(2,5)
+//
+//rel icfg_ctx_insensitive_path(4,2) :- 
+//    icfg_ctx_insensitive_edge(4,2)
+//rel icfg_ctx_insensitive_path(2,5) :- 
+//    icfg_ctx_insensitive_edge(2,5)
+//
+//rel icfg_ctx_insensitive_edge(4,2) :-
+//    cfg_edge(4,2,_)
+//rel icfg_ctx_insensitive_edge(2,5) :-
+//    cfg_edge(2,5,_)
+
+rel cfg_edge(4,2,998) :- 1 == 1
+rel cfg_edge(2,5,999) :- 1 == 1
+
+
+rel prob_icfg_ctx_insensitive_edge(X, Y) :- prob_cfg_edge(X, Y, _)
+rel prob_icfg_ctx_insensitive_edge(X, Y) :- calls(_, Y, X)
+rel prob_icfg_ctx_insensitive_edge(X, Y) :-
+    calls(_, Callee, Callsite),
+    returns(Callee, X),
+    prob_cfg_edge(Callsite, Y, _)
+
+type prob_icfg_ctx_insensitive_path(bound X: u32, Y: u32)
+rel prob_icfg_ctx_insensitive_path(X, Y) :- prob_icfg_ctx_insensitive_edge(X, Y)
+rel prob_icfg_ctx_insensitive_path(X, Y) :- 
+    prob_icfg_ctx_insensitive_edge(X, Z), 
+    prob_icfg_ctx_insensitive_path(Z, Y)
+
+type on_any_prob_icfg_path(bound Z: u32, bound X: u32, bound Y: u32)
+rel on_any_prob_icfg_path(Z, X, Y) :- 
+    prob_icfg_ctx_insensitive_path(X,Z), 
+    prob_icfg_ctx_insensitive_path(Z,Y)
+
+rel is_subclass(X,X,0) :- class(X)
+rel is_subclass(X,Y,1) :- subclass(X,Y)
+rel is_subclass(X,Y,N+1) :- subclass(Z,Y), is_subclass(X,Z,N)
+
+rel 0.5::exception_distance(Exc1, Exc2) :- 
+    is_subclass(Exc1, Exc2, N),
+    N >= 1
+
+rel over_catches(Catch, Throw) :-
+    exception_handler(Try, Catch, Caught),
+    throw(Throw, Thrown),
+    exception_distance(Thrown, Caught),
+    in_try(TryNode, Try),
+    in_catch(CatchNode, Try),
+    on_any_icfg_path(Throw, TryNode, CatchNode)
+
+type exception_handler(a: u32, b: u32, c: Symbol)
+
+rel class(s"Object")
+
+rel subclass(s"Throwable",s"Object")
+
+rel method(293, "getPid")
+rel returns(293, 356)
+rel calls(1788, 925, 1798)
+rel cfg_edge(298,312,293)
+rel prob_cfg_edge(298,312,293)
+rel 0.5::prob_cfg_edge(531,534,521)
+rel location(531, "ChiLogger.java", "init", 23)
+rel method_throws(149,s"IOException")
+
+rel try(295)
+rel exception_handler(295,344,s"Exception")
+rel in_try(297,295)
+
+rel in_catch(344,295)
+rel in_finally(17052,16856)
+rel throw(345,s"RuntimeException")
+rel subclass(s"ChiEdge",s"Object")
+
+rel exception_handler(3, 1, s"Caught") :- 1 == 1
+rel throw(2, s"Thrown") :- 1 == 1
+rel exception_distance(s"Thrown", s"Caught") :- 1 == 1
+rel in_try(4, 3) :- 1 == 1
+rel in_catch(5, 3) :- 1 == 1
+
+
+query on_any_icfg_path
+query over_catches
+

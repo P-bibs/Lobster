@@ -1,0 +1,3 @@
+@file("./experiments/data/gdlog/p2p-Gnutella31.csv", deliminator=",")
+type edge(x: u32, y: u32)
+import "tc.scl"

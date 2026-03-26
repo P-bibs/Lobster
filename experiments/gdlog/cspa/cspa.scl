@@ -1,0 +1,19 @@
+type ValueFlow(src: u32, dest: u32)
+type ValueAlias(src: u32, dest: u32)
+type MemoryAlias(src: u32, dest: u32)
+
+
+// RULE_DECL:
+rel ValueFlow(y, x) :- Assign(y, x)
+rel ValueFlow(x, y) :- Assign(x, z), MemoryAlias(z, y)
+rel ValueFlow(x, y) :- ValueFlow(x, z), ValueFlow(z, y)
+rel tmp(x,z) :- Dereference(y, x), ValueAlias(y, z)
+rel MemoryAlias(x, w) :- tmp(x,z ), Dereference(z, w)
+rel ValueAlias(x, y) :- ValueFlow(z, x), ValueFlow(z, y)
+rel ValueAlias(x, y) :- ValueFlow(z, x), MemoryAlias(z, w),ValueFlow(w, y)
+rel ValueFlow(x, x) :- Assign(x, y)
+rel ValueFlow(x, x) :- Assign(y, x)
+rel MemoryAlias(x, x) :- Assign(y, x)
+rel MemoryAlias(x, x) :- Assign(x, y)
+
+query ValueFlow

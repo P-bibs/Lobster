@@ -1,0 +1,85 @@
+// Higher-order leap-of-thought
+
+// Question and Context
+type question(rela: usize, sub: String, obj: String)
+type context(rela: usize, sub: String, obj: String, validity: bool)
+
+// Relation level higher-order relationships
+rel relations = {
+  0, // part of
+  1, // not part of
+  2, // is a (/r/IsA, hypernym)
+  3, // is not a
+  4, // has a (meronym)
+  5, // does not have a
+  6, // is capable of
+  7, // is not capable of
+  8, // desires
+  9, // does not desire
+}
+
+// All relation implies itself
+rel implies(x, x) = relations(x)
+
+// Relation implies its negation
+rel implies_not = {
+  (0, 1), (1, 0),     // part of <-not-> not part of
+  (2, 3), (3, 2),     // is a <-not-> is not a
+  (4, 5), (5, 4),     // has a <-not-> does not have a
+  (6, 7), (7, 6),     // is capable of <-not-> not capable of
+  (8, 9), (9, 8),     // desires <-not-> does not desire
+  (10, 11), (11, 10), // antonym <-not-> not antonym
+}
+
+// Inverse applied on meronym
+rel inverse = {
+  (0, 4), (4, 0), // A part of B <--> B has a A
+  (1, 5), (5, 1), // A is not part of B <--> B does hot have a A
+}
+
+// Inverse Not
+rel inverse_not = {
+  (0, 5), (5, 0), // A part of B <-not-> B does not have a A
+  (1, 4), (4, 1), // A not part of B <-not-> B has a A
+}
+
+// Transitivity
+rel transitive = {
+  (2, 2, 2), // A is a B, B is a C --> A is a C
+  (0, 0, 0), // A is part of B, B is part of C --> A is part of C
+  (2, 0, 0), // A is a B, B is part of C --> A is part of C
+  (2, 1, 1), // A is a B, B is not part of C --> A is not part of C
+  (0, 2, 0), // A is part of B, B is a C --> A is part of C
+  (2, 4, 4), // A is a B, B has a C --> A has a C
+  (2, 6, 6), // A is a B, B is capable of C --> A is capable of C
+  (2, 8, 8), // A is a B, B desires C --> A desires C
+}
+
+rel transitive_not = {
+  (2, 2, 3), // A is a B, B is a C --> not (A is not a C)
+  (0, 0, 1), // A is part of B, B is part of C --> not (A is not part of C)
+  (2, 0, 1), // A is a B, B is part of C --> not (A is not part of C)
+  (2, 1, 0), // A is a B, B is not part of C --> not (A is part of C)
+  (0, 2, 1), // A is part of B, B is a C --> not (A is not part of C)
+  (2, 4, 5), // A is a B, B has a C --> not (A does not have a C)
+  (2, 6, 7), // A is a B, B is capable of C --> not (A is not capable of C)
+  (2, 8, 9), // A is a B, B desires C --> not (A does not desire C)
+}
+
+// Things can be derived through context propagation
+rel derived(r, s, o, v) = context(r, s, o, v)
+
+// Implication
+rel derived(r2, s, o, v) = implies(r1, r2), derived(r1, s, o, v)
+rel derived(r2, s, o, !v) = implies_not(r1, r2), derived(r1, s, o, v)
+
+// Inversion
+rel derived(r2, o, s, v) = inverse(r1, r2), derived(r1, s, o, v)
+rel derived(r2, o, s, !v) = inverse_not(r1, r2), derived(r1, s, o, v)
+
+// Transitive
+rel derived(r3, x, z, v1 && v2) = transitive(r1, r2, r3), derived(r1, x, y, v1), derived(r2, y, z, v2)
+rel derived(r3, x, z, !v1 || !v2) = transitive_not(r1, r2, r3), derived(r1, x, y, v1), derived(r2, y, z, v2)
+
+// Answer
+rel answer(v) = derived(r, s, o, v), question(rq, s, o), implies(r, rq)

@@ -1,0 +1,90 @@
+// ================================================================================================================
+// ==== Parse the probabilistic sequence of RNA sequence token type
+//
+// Input:
+//   token(0, DANGLE)
+//   token(1, HELIX_STACK_LEFT)
+//   token(2, HAIRPIN_LEFT)
+//   token(3, HAIRPIN_UNPAIRED)
+//   token(4, HAIRPIN_UNPAIRED)
+//   token(5, HAIRPIN_RIGHT)
+//   token(6, HELIX_STACK_RIGHT)
+//   token(7, DANGLE)
+//
+// Output:
+//   pair(1, 6)
+//   pair(2, 5)
+
+import "token.scl"
+
+// ================================================================================================================
+// ==== Input and output
+
+// Input: tokens
+type token(i: usize, token: Token)
+type length(n: usize)
+
+// Output: pairs and unpaired neucleotides
+type pair(i: usize, j: usize)
+type unpaired(i: usize)
+
+// ================================================================================================================
+// ==== Main inference algorithm
+
+// Helix stack pairs
+rel helix_stack(i, i + 1) = token(i, HELIX_STACK_LEFT) and token(i + 1, HELIX_STACK_RIGHT)
+rel helix_stack(i, j) = token(i, HELIX_STACK_LEFT) and substructure(i + 1, j - 1) and token(j, HELIX_STACK_RIGHT)
+
+// Hairpin loop (unpaired region)
+rel hairpin_unpaired_region(i, i) = token(i, HAIRPIN_UNPAIRED)
+rel hairpin_unpaired_region(i, j + 1) = hairpin_unpaired_region(i, j) and token(j + 1, HAIRPIN_UNPAIRED)
+
+// Hairpin loop
+rel hairpin(i, j) = token(i, HAIRPIN_LEFT) and hairpin_unpaired_region(i + 1, j - 1) and token(j, HAIRPIN_RIGHT)
+
+// Internal Loop (unpaired region)
+rel intern_loop_unpaired_left(i, i) = token(i - 1, INTERN_LOOP_LEFT) and token(i, INTERN_LOOP_UNPAIRED)
+rel intern_loop_unpaired_left(i, j + 1) = intern_loop_unpaired_left(i, j) and token(j + 1, INTERN_LOOP_UNPAIRED)
+rel intern_loop_unpaired_right(j, j) = token(j + 1, INTERN_LOOP_RIGHT) and token(j, INTERN_LOOP_UNPAIRED)
+rel intern_loop_unpaired_right(i - 1, j) = intern_loop_unpaired_right(i, j) and token(i - 1, INTERN_LOOP_UNPAIRED)
+
+// Internal Loop
+rel intern_loop(i, j) = token(i, INTERN_LOOP_LEFT) and substructure(i + 1, k - 1) and intern_loop_unpaired_right(k, j - 1) and token(j, INTERN_LOOP_RIGHT)
+rel intern_loop(i, j) = token(i, INTERN_LOOP_LEFT) and intern_loop_unpaired_left(i + 1, k - 1) and substructure(k, j - 1) and token(j, INTERN_LOOP_RIGHT)
+rel intern_loop(i, j) = token(i, INTERN_LOOP_LEFT) and intern_loop_unpaired_left(i + 1, k - 1) and substructure(k, l) and intern_loop_unpaired_right(l, j - 1) and token(j, INTERN_LOOP_RIGHT)
+
+// Multi-loop (unpaired region)
+rel multi_loop_unpaired(i, i) = token(i, MULTI_LOOP_UNPAIRED)
+rel multi_loop_unpaired(i, j + 1) = multi_loop_unpaired(i, j) and token(j + 1, MULTI_LOOP_UNPAIRED)
+
+// Multi-loop
+rel multi_loop_base(i, j) = token(i, MULTI_LOOP_LEFT) and substructure(i + 1, j)
+rel multi_loop_base(i, j) = token(i, MULTI_LOOP_LEFT) and multi_loop_unpaired(i + 1, k - 1) and substructure(k, j)
+rel multi_loop_base(i, j) = multi_loop_base(i, k) and multi_loop_unpaired(k + 1, l - 1) and substructure(l, j)
+rel multi_loop(i, j) = multi_loop_base(i, j - 1) and token(j, MULTI_LOOP_RIGHT)
+rel multi_loop(i, j) = multi_loop_base(i, k) and multi_loop_unpaired(k + 1, j - 1) and token(j, MULTI_LOOP_RIGHT)
+
+// Dangle region
+rel dangle_region(i, i) = token(i, DANGLE)
+rel dangle_region(i, j) = dangle_region(i, j - 1) and token(j, DANGLE)
+
+// Substructures
+rel substructure(i, j) = helix_stack(i, j)
+rel substructure(i, j) = hairpin(i, j)
+rel substructure(i, j) = intern_loop(i, j)
+rel substructure(i, j) = multi_loop(i, j)
+
+// // Whole RNA structure parsing
+rel well_formed() = substructure(0, n - 1) and length(n)
+rel well_formed() = dangle_region(0, i) and substructure(i + 1, n - 1) and length(n)
+rel well_formed() = substructure(0, j) and dangle_region(j + 1, n - 1) and length(n)
+rel well_formed() = dangle_region(0, i) and substructure(i + 1, j - 1) and dangle_region(j, n - 1) and length(n)
+rel well_formed() = dangle_region(0, n - 1) and length(n)
+
+// Pairs are derived from substructures
+rel pair(i, j) = well_formed() and substructure(i, j)
+rel unpaired(i) = well_formed() and (token(i, HAIRPIN_UNPAIRED) or token(i, INTERN_LOOP_UNPAIRED) or token(i, MULTI_LOOP_UNPAIRED) or token(i, DANGLE))
+
+// // Residuals
+// rel pair_residual(i, j) = substructure(i, j)
+// rel unpaired(i) = token(i, HAIRPIN_UNPAIRED) or token(i, INTERN_LOOP_UNPAIRED) or token(i, MULTI_LOOP_UNPAIRED) or token(i, DANGLE)

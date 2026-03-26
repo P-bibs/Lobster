@@ -1,0 +1,13 @@
+[project]
+name = "scallop-gpt"
+version = "0.0.2"
+dependencies = [
+  "openai == 0.28",
+  "torch",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."scallop.plugin"]
+gpt = "scallop_gpt:ScallopGPTPlugin"

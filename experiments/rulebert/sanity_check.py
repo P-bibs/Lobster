@@ -1,0 +1,259 @@
+import os
+import json
+import scallopy
+from argparse import ArgumentParser
+from tqdm import tqdm
+
+import torch
+from torch import nn, optim
+from torch.utils.data import DataLoader
+from convert_scl_file import to_rule
+
+class RuleBertDataset:
+  def __init__(self, root, dataset, split):
+    self.dataset_dir = os.path.join(root, dataset)
+    self.file_name = os.path.join(self.dataset_dir, f"{split}.json")
+    self.data = json.load(open(self.file_name, 'r'))
+
+  def __len__(self):
+    return len(self.data)
+
+  def __getitem__(self, i):
+    datapoint = self.data[i]
+    query = datapoint['hypothesis'].replace('relation', 'relation_').replace('type', 'type_').strip()
+    facts = [f.replace('relation', 'relation_').replace('type', 'type_').strip() for f in datapoint['facts'].split('.')]
+    input_facts = {}
+
+    query_info = query.split('(')
+    query_pred = query_info[0]
+    query_atoms = query_info[1][:-1].split(',')
+    scl_query_elements = [f'\"{a}\"' for a in query_atoms]
+    scl_query = f"{query_pred}({','.join(scl_query_elements)})"
+
+    for fact in facts:
+      if not '(' in fact:
+        continue
+      fact_parsed = fact.split('(')
+      pred = fact_parsed[0]
+      clause = tuple(fact_parsed[1][:-1].split(','))
+      # Ensure everything is positive
+      if 'neg' == pred[:3]:
+        pred = pred[3:]
+        prob = torch.tensor(0.0)
+      else:
+        prob = torch.tensor(1.0)
+
+      if not pred in input_facts:
+        input_facts[pred] = []
+      input_facts[pred].append((prob, clause))
+    # rules = [r.replace('relation', 'relation_').replace('type', 'type_') for r in datapoint['rule']]
+    rules = datapoint['rule']
+    # if any of the rules has less than 0.5's support, it will lead to wrong answer
+    # All evidences does not support probability (Why??)
+    rule_probs = datapoint['rule_support']
+
+    query_result = torch.tensor(1) if datapoint['output'] else torch.tensor(0)
+
+    return input_facts, scl_query, rules, rule_probs, query_result, datapoint
+
+  @staticmethod
+  def collate_fn(batch):
+    batched_facts = [fact for (fact, _, _, _, _, _) in batch]
+    batched_query = [query for (_, query, _, _, _, _) in batch]
+    batched_rules = [rules for (_, _, rules, _, _, _) in batch]
+    batched_rule_prob = [probs for (_, _, _, probs, _, _) in batch]
+    batched_query_results = torch.stack([query_result for (_, _, _, _, query_result, _) in batch])
+    batched_dps =  [dp for (_, _, _, _, _, dp) in batch]
+    return batched_facts, batched_query, batched_rules, batched_rule_prob, batched_query_results, batched_dps
+
+def rule_bert_loader(root, dataset, batch_size):
+  train_dataset = RuleBertDataset(root, dataset, "train")
+  train_loader = DataLoader(train_dataset, batch_size, collate_fn=RuleBertDataset.collate_fn, shuffle=True)
+  test_dataset = RuleBertDataset(root, dataset, "test")
+  test_loader = DataLoader(test_dataset, batch_size, collate_fn=RuleBertDataset.collate_fn, shuffle=True)
+  return (train_loader, test_loader)
+
+class RuleBertExecutor:
+  def __init__(self, provenance, train_top_k, test_top_k, scl_path, debug = False) -> None:
+    self.scallop_ctx = scallopy.ScallopContext(provenance=provenance, train_k=train_top_k, test_k=test_top_k)
+    self.scallop_ctx.import_file(scl_path)
+    self.deterministic_relations = self.scallop_ctx.relations()
+    self.scallop_ctx.set_non_probabilistic(self.deterministic_relations)
+    self.debug = debug
+
+  def execute(self, batched_facts, batched_query, batched_rules, batched_rule_probs):
+    answers = []
+    for facts, query, rules, rule_probs in zip(batched_facts, batched_query, batched_rules, batched_rule_probs):
+      current_ctx = self.scallop_ctx.clone()
+      rule_preds = [f"p_{ct}" for ct in range(len(rules))]
+
+      query_info = query.split('(')
+      query_pred = query_info[0]
+      query_tp = query_info[1][:-1].split(',')
+
+      if not 'neg' == query_pred[:3]:
+        query_pred_pos = query_pred
+        query_pred_neg = 'neg' + query_pred
+        pos_question = True
+      else:
+        query_pred_pos = query_pred[3:]
+        query_pred_neg = query_pred
+        pos_question = False
+      pos_query = query_pred_pos + '(' + query_info[1]
+      neg_query = query_pred_neg + '(' + query_info[1]
+
+      for rid, (rule_prob, raw_rule, rule_pred) in enumerate(zip(rule_probs, rules, rule_preds)):
+        rule = to_rule(raw_rule)
+        rule = rule.add_rel_prob(rule_pred)
+        scl_rule = rule.to_scl()
+        current_ctx.add_relation(rule_pred, ())
+        current_ctx.add_rule(scl_rule)
+        facts[rule_pred] = [(rule_prob, ())]
+
+      all_entities = set()
+      all_entities.update([eval(tp) for tp in query_tp])
+      for pred, tps in facts.items():
+        for (_, tp) in tps:
+          for entity in tp:
+            if isinstance(entity, str):
+              all_entities.add(entity)
+        current_ctx.add_facts(pred, tps)
+      current_ctx.add_facts('entity', [(1.0, (e, )) for e in all_entities])
+
+      # Add query
+      current_ctx.add_rule(f"answer_pos() = {pos_query}")
+      current_ctx.add_rule(f"answer_neg() = {neg_query}")
+
+      current_ctx.run()
+      query_pos_answer = list(current_ctx.relation("answer_pos"))
+      query_neg_answer = list(current_ctx.relation("answer_neg"))
+
+      if len(query_pos_answer) == 0:
+        pos_prob = torch.tensor(0.0)
+      else:
+        pos_prob = list(current_ctx.relation("answer_pos"))[0][0]
+
+      if len(query_neg_answer) == 0:
+        neg_prob = torch.tensor(0.0)
+      else:
+        neg_prob = list(current_ctx.relation("answer_neg"))[0][0]
+
+      # False, True
+      if pos_question:
+        answers.append(torch.stack([neg_prob, pos_prob]))
+      else:
+        answers.append(torch.stack([pos_prob, neg_prob]))
+    return torch.stack(answers)
+
+class Trainer:
+  def __init__(self, executor, train_loader, test_loader):
+    self.device = device
+    self.train_loader = train_loader
+    self.test_loader = test_loader
+    self.min_test_loss = 10000000000.0
+    self.max_accu = 0
+    self.executor = executor
+
+  def loss(self, y_pred, y):
+    (_, dim) = y_pred.shape
+    gt = torch.stack([torch.tensor([1.0 if i == t else 0.0 for i in range(dim)]) for t in y])
+    return nn.functional.binary_cross_entropy(y_pred, gt)
+
+  def accuracy(self, y_pred, y):
+    batch_size = len(y)
+    pred = torch.argmax(y_pred, dim=1)
+    num_correct = len([() for i, j in zip(pred, y) if i == j])
+    return (num_correct, batch_size)
+
+  def get_corrects(self, y_pred, y):
+    pred = torch.argmax(y_pred, dim=1)
+    correct_idx = len([() for i, j in zip(pred, y) if i == j])
+    return correct_idx
+
+  def train(self, num_epochs):
+    self.test_epoch(0)
+    for i in range(1, num_epochs + 1):
+      self.train_epoch(i)
+      self.test_epoch(i)
+
+  def train_epoch(self, epoch):
+    total_count = 0
+    total_correct = 0
+    total_loss = 0
+    iterator = tqdm(self.train_loader)
+    with torch.no_grad():
+      for (i, (batched_facts, batched_query, batched_rules, batched_rule_prob, y, datapoints)) in enumerate(iterator):
+        y_pred = self.executor.execute(batched_facts, batched_query, batched_rules, batched_rule_prob)
+        loss = self.loss(y_pred, y)
+        total_loss += loss.item()
+
+        (num_correct, batch_size) = self.accuracy(y_pred, y)
+        if num_correct < 1:
+          print ('here')
+        total_count += batch_size
+        total_correct += num_correct
+        correct_perc = 100. * total_correct / total_count
+        avg_loss = total_loss / (i + 1)
+
+        iterator.set_description(f"[Train Epoch {epoch}] Avg Loss: {avg_loss}, Accuracy: {total_correct}/{total_count} ({correct_perc:.2f}%)")
+
+  def test_epoch(self, epoch):
+    total_count = 0
+    total_correct = 0
+    total_loss = 0
+    iterator = tqdm(self.test_loader)
+    with torch.no_grad():
+      for (i, (batched_facts, batched_query, batched_rules, batched_rule_prob, y, datapoints)) in enumerate(iterator):
+        y_pred = self.executor.execute(batched_facts, batched_query, batched_rules, batched_rule_prob)
+        loss = self.loss(y_pred, y)
+        total_loss += loss.item()
+
+        (num_correct, batch_size) = self.accuracy(y_pred, y)
+        if num_correct < 1:
+          print ('here')
+        total_count += batch_size
+        total_correct += num_correct
+        correct_perc = 100. * total_correct / total_count
+        avg_loss = total_loss / (i + 1)
+
+        iterator.set_description(f"[Test Epoch {epoch}] Avg Loss: {avg_loss}, Accuracy: {total_correct}/{total_count} ({correct_perc:.2f}%)")
+
+if __name__ == "__main__":
+  current_dir = os.path.abspath(__file__)
+  data_dir = os.path.abspath(os.path.join(current_dir, '../../data/RuleBert'))
+
+  parser = ArgumentParser()
+  parser.add_argument("--data-dir", type=str, default=data_dir)
+  parser.add_argument("--dataset", type=str, default="valid_chain_rules_train_0")
+  parser.add_argument("--seed", type=int, default=1234)
+  parser.add_argument("--batch-size", type=int, default=64)
+  parser.add_argument("--provenance", type=str, default="difftopbottomkclauses")
+  parser.add_argument("--train-top-k", type=int, default=1)
+  parser.add_argument("--test-top-k", type=int, default=1)
+  parser.add_argument("--cuda", type=bool, default=True)
+  parser.add_argument("--gpu", type=int, default=0)
+  args = parser.parse_args()
+  print(args)
+
+  torch.manual_seed(args.seed)
+  torch.cuda.manual_seed_all(args.seed)
+  scl_path = os.path.join(data_dir, 'scl/pred_decs.scl')
+
+  if args.cuda:
+    if torch.cuda.is_available(): device = torch.device(f"cuda:{args.gpu}")
+    else: raise Exception("No cuda available")
+  else: device = torch.device("cpu")
+
+  if args.cuda:
+    torch.set_default_tensor_type(torch.cuda.FloatTensor)
+  else:
+    torch.set_default_tensor_type(torch.FloatTensor)
+
+  # Load the dataset
+  (train_loader, test_loader) = rule_bert_loader(args.data_dir, args.dataset, args.batch_size)
+  executer = RuleBertExecutor(args.provenance, args.train_top_k, args.test_top_k, scl_path)
+
+  # Train
+  trainer = Trainer(executer, train_loader, test_loader,)
+  trainer.train(1)
+  # trainer.test_epoch(0)

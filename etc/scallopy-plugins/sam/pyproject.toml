@@ -1,0 +1,19 @@
+[project]
+name = "scallop-sam"
+version = "0.0.2"
+dependencies = [
+  "numpy",
+  "torch",
+  "opencv-python",
+  "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git",
+  "pycocotools",
+  "matplotlib",
+  "onnxruntime",
+  "onnx",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."scallop.plugin"]
+sam = "scallop_sam:ScallopSamPlugin"

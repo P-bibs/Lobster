@@ -1,0 +1,1156 @@
+
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 362612us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign#perm#(1,0)", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2753895us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3886544us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 245388us
+t0: Stratum: 1	 Time in run(): 0us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign", "Assign#perm#(1,0)"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2739884us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3636713us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 345304us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Assign#perm#(1,0)", "Dereference", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2736719us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3609808us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 245855us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Assign", "Dereference", "Assign#perm#(1,0)"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2746674us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3649015us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 362116us
+t0: Stratum: 1	 Time in run(): 2us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign", "Assign#perm#(1,0)"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2758277us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3495557us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 239588us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign", "Assign#perm#(1,0)"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2737756us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3582101us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 352419us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign#perm#(1,0)", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2739820us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3486547us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 235633us
+t0: Stratum: 1	 Time in run(): 0us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Assign#perm#(1,0)", "Dereference", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2750080us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3859656us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 383594us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign#perm#(1,0)", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2742925us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3496709us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 358962us
+t0: Stratum: 1	 Time in run(): 2us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign#perm#(1,0)", "Assign"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2740918us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3503923us
+Creating new Leapfrog allocator
+========================================
+t0: Stratum: 0	 Time in run(): 310245us
+t0: Stratum: 1	 Time in run(): 1us
+Offloading stratum set 2..3 to the GPU
+Input relations: ["Dereference", "Assign", "Assign#perm#(1,0)"]
+Output relations: []
+		Leapfrog follower allocs: 0.540883 GB
+		Leapfrog leader allocs: 0.560773 GB
+		Leapfrog follower allocs: 1.03214 GB
+		Leapfrog leader allocs: 0.782155 GB
+		Leapfrog follower allocs: 1.21772 GB
+		Leapfrog leader allocs: 0.839865 GB
+		Leapfrog follower allocs: 1.93824 GB
+		Leapfrog leader allocs: 1.22507 GB
+		Leapfrog follower allocs: 2.19256 GB
+		Leapfrog leader allocs: 1.47174 GB
+		Leapfrog follower allocs: 4.31171 GB
+		Leapfrog leader allocs: 3.00563 GB
+		Leapfrog follower allocs: 9.6326 GB
+		Leapfrog leader allocs: 5.80327 GB
+		Leapfrog follower allocs: 9.01593 GB
+		Leapfrog leader allocs: 4.18259 GB
+		Leapfrog follower allocs: 10.235 GB
+		Leapfrog leader allocs: 7.12064 GB
+		Leapfrog follower allocs: 12.3902 GB
+		Leapfrog leader allocs: 8.64956 GB
+		Leapfrog follower allocs: 14.0865 GB
+		Leapfrog leader allocs: 9.7581 GB
+		Leapfrog follower allocs: 17.8008 GB
+		Leapfrog leader allocs: 11.4573 GB
+		Leapfrog follower allocs: 18.163 GB
+		Leapfrog leader allocs: 11.3945 GB
+		Leapfrog follower allocs: 19.6667 GB
+		Leapfrog leader allocs: 12.934 GB
+		Leapfrog follower allocs: 21.3235 GB
+		Leapfrog leader allocs: 13.6656 GB
+		Leapfrog follower allocs: 18.9872 GB
+		Leapfrog leader allocs: 14.104 GB
+		Leapfrog follower allocs: 20.6203 GB
+		Leapfrog leader allocs: 14.1336 GB
+		Leapfrog follower allocs: 21.1792 GB
+		Leapfrog leader allocs: 15.3579 GB
+		Leapfrog follower allocs: 22.0359 GB
+		Leapfrog leader allocs: 14.3855 GB
+		Leapfrog follower allocs: 21.3805 GB
+		Leapfrog leader allocs: 14.7205 GB
+		Leapfrog follower allocs: 20.4961 GB
+		Leapfrog leader allocs: 15.7047 GB
+		Leapfrog follower allocs: 21.5138 GB
+		Leapfrog leader allocs: 15.9807 GB
+		Leapfrog follower allocs: 23.1169 GB
+		Leapfrog leader allocs: 15.8353 GB
+		Leapfrog follower allocs: 23.2455 GB
+		Leapfrog leader allocs: 15.8326 GB
+		Leapfrog follower allocs: 23.357 GB
+		Leapfrog leader allocs: 15.8755 GB
+		Leapfrog follower allocs: 21.4845 GB
+		Leapfrog leader allocs: 16.1287 GB
+		Leapfrog follower allocs: 21.7241 GB
+		Leapfrog leader allocs: 16.3087 GB
+		Leapfrog follower allocs: 21.8666 GB
+		Leapfrog leader allocs: 16.8102 GB
+		Leapfrog follower allocs: 22.343 GB
+		Leapfrog leader allocs: 16.3001 GB
+		Leapfrog follower allocs: 21.8211 GB
+		Leapfrog leader allocs: 16.2849 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.9954 GB
+		Leapfrog follower allocs: 22.5071 GB
+		Leapfrog leader allocs: 16.2844 GB
+		Leapfrog follower allocs: 21.7961 GB
+		Leapfrog leader allocs: 16.2851 GB
+		Leapfrog follower allocs: 21.7965 GB
+		Leapfrog leader allocs: 16.6147 GB
+		Leapfrog follower allocs: 22.1262 GB
+		Leapfrog leader allocs: 16.2855 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2857 GB
+		Leapfrog follower allocs: 21.797 GB
+		Leapfrog leader allocs: 16.2858 GB
+		Leapfrog follower allocs: 21.8356 GB
+		Leapfrog leader allocs: 16.2865 GB
+		Leapfrog follower allocs: 21.7984 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7988 GB
+		Leapfrog leader allocs: 16.287 GB
+		Leapfrog follower allocs: 21.7987 GB
+		Leapfrog leader allocs: 14.0107 GB
+		Leapfrog follower allocs: 19.5224 GB
+		Leapfrog leader allocs: 11.5695 GB
+		Leapfrog follower allocs: 15.8996 GB
+		Leapfrog leader allocs: 13.3938 GB
+		Leapfrog follower allocs: 14.5753 GB
+		Leapfrog leader allocs: 12.0904 GB
+		Leapfrog follower allocs: 17.602 GB
+		Leapfrog leader allocs: 8.97571 GB
+		Leapfrog follower allocs: 13.3058 GB
+		Leapfrog leader allocs: 5.55799 GB
+		Leapfrog follower allocs: 5.55799 GB
+		Leapfrog leader allocs: 4.47974 GB
+Timer [main]: 2745240us
+Total tables: 1458
+Tables remaining: 0
+Stratum set: 2..3	 Time in run(): 3509944us

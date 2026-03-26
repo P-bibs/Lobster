@@ -1,0 +1,42 @@
+import "../scl/clevr_eval.scl"
+
+// NL Question
+//   Are there more big green things than large purple shiny cubes?
+
+// CLEVR Functional Program
+//   greater_than(
+//     count(color(size(scene(), "large"), "green")),
+//     count(shape(material(color(size(scene(), "large"), "purple"), "metal"), "cube")))
+
+// CLEVR Functional Program written in serialized form
+//    0 {'inputs': [], 'function': 'scene', 'value_inputs': []}
+//    1 {'inputs': [0], 'function': 'filter_size', 'value_inputs': ['large']}
+//    2 {'inputs': [1], 'function': 'filter_color', 'value_inputs': ['green']}
+//    3 {'inputs': [2], 'function': 'count', 'value_inputs': []}
+//    4 {'inputs': [], 'function': 'scene', 'value_inputs': []}
+//    5 {'inputs': [4], 'function': 'filter_size', 'value_inputs': ['large']}
+//    6 {'inputs': [5], 'function': 'filter_color', 'value_inputs': ['purple']}
+//    7 {'inputs': [6], 'function': 'filter_material', 'value_inputs': ['metal']}
+//    8 {'inputs': [7], 'function': 'filter_shape', 'value_inputs': ['cube']}
+//    9 {'inputs': [8], 'function': 'count', 'value_inputs': []}
+//   10 {'inputs': [3, 9], 'function': 'greater_than', 'value_inputs': []}
+
+// Program written in facts
+rel scene_expr = {0, 4}
+rel filter_size_expr = {(1, 0, "large"), (5, 4, "large")}
+rel filter_color_expr = {(2, 1, "green"), (6, 5, "purple")}
+rel filter_material_expr = {(7, 6, "metal")}
+rel filter_shape_expr = {(8, 7, "cube")}
+rel count_expr = {(3, 2), (9, 8)}
+rel greater_than_expr = {(10, 3, 9)}
+rel root_expr = {10}
+
+// objects
+rel obj = {0, 1, 2, 3, 4, 5}
+rel size = {(0, "large"), (1, "large"), (2, "small"), (3, "large"), (4, "small"), (5, "large")}
+rel color = {(0, "blue"), (1, "green"), (2, "cyan"), (3, "brown"), (4, "gray"), (5, "brown")}
+rel shape = {(0, "cube"), (1, "cylinder"), (2, "cube"), (3, "cylinder"), (4, "cube"), (5, "sphere")}
+rel material = {(0, "rubber"), (1, "metal"), (2, "rubber"), (3, "metal"), (4, "rubber"), (5, "metal")}
+
+// YES/NO question
+query yn_result

@@ -1,0 +1,4 @@
+rel path(x, y) = edge(x,y)
+rel path(a, c) = path(a,b), edge(b,c)
+//rel path(a, c) = edge(a,b), path(b,c)
+query path

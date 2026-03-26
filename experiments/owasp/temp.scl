@@ -1,0 +1,28 @@
+rel dataflow_edge = {
+  ("bar = new Test().doSomething(request, param)", "response.getWriter().println(bar)"),
+  ("param = scr.getTheValue(\"BenchmarkTest01771\")", "bar = new Test().doSomething(request, param)"),
+  ("scr = new org.owasp.benchmark.helpers.SeparateClassRequest(request)", "param = scr.getTheValue(\"BenchmarkTest01771\")"),
+}
+
+rel source = {
+  "b58724.append(\" SafeStuff\")",
+  "b58724.replace(b58724.length() - \"Chars\".length(), b58724.length(), \"Chars\")",
+  "d58724 = c58724.substring(0, c58724.length() - 1)",
+  "e58724 = new String(org.apache.commons.codec.binary.Base64.decodeBase64(org.apache.commons.codec.binary.Base64.encodeBase64(d58724.getBytes())))",
+  "f58724 = e58724.split(\" \")[0]",
+}
+
+rel sanitizer = {
+
+}
+
+rel sink = {
+  "response.getWriter().println(bar)"
+}
+
+rel path(x, y) = dataflow_edge(x, y) // and not sanitizer(y)
+rel path(x, z) = path(x, y) and dataflow_edge(y, z) // and not sanitizer(z)
+
+rel vulnerable(x, y) = source(x) and path(x, y) and sink(y)
+
+rel output(true) = vulnerable(x, y)

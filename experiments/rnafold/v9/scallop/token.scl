@@ -1,0 +1,11 @@
+// The set of nucleotides
+type Nucleotide = A | C | G | U | X
+
+rel all_nucleotide = {A, C, G, U}
+rel char_to_nucleotide = {('A', A), ('C', C), ('G', G), ('U', U)}
+
+rel good_pair_type = {(A, U), (C, G), (G, C), (G, U), (U, A), (U, G)}
+rel pair_type(x, y) = good_pair_type(x, y)
+
+// The set of tokens
+type Token = LEFT | RIGHT | UNPAIRED

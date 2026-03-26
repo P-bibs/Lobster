@@ -1,0 +1,13 @@
+import "../scl/lot.scl"
+
+// "phrase": "A colleague is a layer.",
+// "context": "A colleague is a person. A person is not a layer.",
+// "answer": 0
+
+rel phrase = {("is a", "colleague", "layer")}
+rel context = {
+  ("is a", "colleague", "person", true),
+  ("is a", "person", "layer", false),
+}
+
+query answer

@@ -1,0 +1,4 @@
+@file("./experiments/data/gdlog/vsp_finan usroad SF.cedge loc-Brightkite Gnutella31 fe_body fe-sphere fc_ocean ego-Facebook com-dblp CA-HepTH/edge.csv", deliminator="	")
+type edge(x: u32, y: u32)
+
+import "tc.scl"

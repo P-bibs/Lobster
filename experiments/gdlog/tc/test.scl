@@ -1,0 +1,8 @@
+type edge(x: u32, y: u32)
+rel edge(1,2)
+rel edge(2,3)
+rel edge(3,4)
+
+rel path(x, y) = edge(x,y)
+rel path(a, c) = path(a,b), edge(b,c)
+query path

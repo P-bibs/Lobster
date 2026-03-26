@@ -1,0 +1,35 @@
+type is_a(String, String)
+type oa_rel(String, String, String)
+type name(String, u32)
+type attr(String, u32)
+type rela(String, u32, u32)
+type target(u32)
+
+
+type img_path(String)
+type idx(u32)
+type infer_name(bool)
+type infer_attr(bool)
+type infer_rela(bool)
+type debug(bool)
+type output(u32)
+type obj_bbox(u32, u32, u32, u32, u32)
+
+rel image($load_image(path)) :- img_path(path)
+rel obj_img(Oid, $crop_image(img, x, y, w, h)) :- obj_bbox(Oid, x, y, w, h), image(img)
+
+@clip(
+    ["building", "doors", "flowers", "chair", "tomato", "roof", "trunk", "sky", "cat", "fur", "mouth", "steps", "tie", "mushroom", "sauce", "thumb", "nose", "glasses", "platform", "men", "jeans", "shoe", "racket", "table", "pepper", "tree", "helmet", "sign", "sticker", "remote control", "finger", "rope", "cars", "television", "bucket", "glove", "cord", "bushes", "balcony", "hand", "star", "screen", "sock", "onion", "letters", "ceiling", "boy", "train", "luggage", "paw", "necklace", "weeds", "cake", "pants", "pepperoni", "cone", "wheel", "oven", "field", "wrist", "ears", "net", "vase", "hills", "pillow", "foot", "faucet", "goggles", "tower", "shirt", "planter", "sandwich", "container", "lettuce", "box", "boxes", "giraffe", "utensil", "rug", "liquid", "tire", "tail", "tag", "ring", "trash", "boat", "stick", "sink", "bananas", "phone", "towel", "animal", "doorway", "picture", "plants", "clouds", "hill", "floor", "curtains", "truck", "girl", "pocket", "train car", "cabinet", "cable", "water", "dish", "couch", "curtain", "fingers", "spectators", "street light", "sofa", "room", "desk", "woman", "mirror", "meat", "sneakers", "coat", "logo", "plate", "painting", "tray", "bed", "bench", "bathroom", "hat", "baseball", "branches", "ball", "frame", "ear", "van", "keyboard", "ground", "rock", "train tracks", "leaf", "mountains", "fruit", "windows", "head", "window", "lamp", "trees", "wheels", "trash can", "gate", "drawer", "collar", "label", "eyes", "road", "orange", "cloud", "grill", "belt", "hands", "potato", "bush", "fence", "mug", "crust", "snow", "pavement", "skis", "dirt", "baby", "drink", "person", "wall", "numbers", "suit", "toothbrush", "skin", "people", "cheese", "sweater", "blanket", "batter", "gravel", "legs", "sun", "olive", "car", "tiles", "sidewalk", "leg", "computer", "log", "duck", "man", "suitcase", "hair", "counter", "wetsuit", "shelf", "jersey", "socks", "bag", "bun", "jacket", "uniform", "magnet", "laptop", "windshield", "light switch", "motorcycle", "face", "napkin", "grass", "t-shirt", "arm", "glass", "pole", "lid", "pan", "bike", "guy", "book", "crate", "dress", "icing", "stairs", "oranges", "bathtub", "tomatoes", "shorts", "street", "taxi", "banana", "bottle", "walkway", "burner", "chimney", "path", "bat", "bread", "feet", "bowl", "vehicles", "food", "game", "word", "barrier", "topping", "number", "airplane", "ski", "eye glasses", "pillows", "eye", "pizza", "children", "neck", "shoes", "elephant", "skier", "leaves", "door", "plant", "words", "cap", "sweatshirt", "frisbee", "computer mouse", "flower", "mustache", "fork", "soap", "basket"],
+    prompt="image of {{}}"
+)
+    type img_name(bound image: Tensor, name: String)
+rel name(N, Oid) :- N = top<5>(N: infer_name(true), obj_img(Oid, img), img_name(img, N))
+
+rel is_a(A, C) :- is_a(A, B), is_a(B, C)
+rel is_a(N, "thing") :- name(N, T)
+rel name(N1, Oid) :- name(N2, Oid), is_a(N2, N1)
+
+rel oa_rel("is a type of", Obj, Attr) :- is_a(Obj, Attr)
+rel oa_rel(R, Obj, Attr) :- is_a(Obj, T), oa_rel(R, T, Attr)
+
+rel dump_img($save_image($tag_image(img, x, y, w, h, Oid as String), $string_concat(i as String, "_", Oid as String))) :- debug(true), (target(Oid) or output(Oid)), obj_bbox(Oid, x, y, w, h), image(img), idx(i)

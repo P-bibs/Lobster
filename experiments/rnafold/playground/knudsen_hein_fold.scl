@@ -1,0 +1,67 @@
+// Global Constants
+rel possible_pairing = {('A', 'U'), ('U', 'A'), ('C', 'G'), ('G', 'C'), ('G', 'U'), ('U', 'G')}
+
+// Input:
+// The RNA sequence
+type rna(seq: String)
+
+// Outputs
+type ss(structure: String) // The secondary structure in dot-bracket form
+type pair(i: usize, j: usize) // Whether there exists a pair between i and j
+
+// Knudsen–Hein grammar (simplified)
+//   S → L | LS
+//   L → N | (S)
+//   N → 'A' | 'C' | 'G' | 'U'
+//
+// The set of non-terminal symbols in the grammer is {S, L}
+type NonTermSymbol = S | L
+
+// The product rules in Knudsen–Hein grammar
+type Rule = S2L    // S -> L
+          | S2LS   // S -> LS
+          | L2s    // L -> s
+          | L2dSd  // L -> dSd
+
+// The probability of applying a product rule on subsequence [i, j)
+// This is an input from a neural network
+type prod_rule_prob(i: usize, j: usize, rule: Rule)
+
+// Extracting basic information
+rel base(id, c) = rna(seq) and string_chars(seq, id, c) // {(0, 'A'), (1, 'C'), (2, 'G'), ...}
+rel len($string_length(seq)) = rna(seq)
+
+// Whether a subsequence (i, j) is matched on a non-terminal symbol
+type matched(bound i: usize, j: usize, sym: NonTermSymbol, seq: String)
+
+// The semantics of each production rule
+/* S -> L   */ rel matched(i, j, S, seq) = matched(i, j, L, seq)
+  // and
+  // prod_rule_prob(i, j, S2L)
+
+/* S -> LS  */ rel matched(i, k, S, s1 + s2) =
+  matched(i, j, L, s1) and matched(j, k, S, s2)
+  // and
+  // prod_rule_prob(i, k, S2LS)
+
+/* L -> s   */ rel matched(id, id + 1, L, ".") = base(id, _)
+  // and
+  // prod_rule_prob(id, id + 1, L2s)
+
+/* L -> dSd */ rel {
+  matched(i, j + 1, L, $format("({})", subseq)),
+  pair(i, j)
+} =
+  base(i, xi) and matched(i + 1, j, S, subseq) and base(j, xj) and possible_pairing(xi, xj)
+  // and
+  // prod_rule_prob(i, j + 1, L2dFd)
+
+@goal
+rel goal() = len(l) and matched(0, l, S, structure)
+
+// The extracted secondary structure
+rel ss(structure) = len(l) and matched(0, l, S, structure)
+
+// Queries
+query ss
+query pair

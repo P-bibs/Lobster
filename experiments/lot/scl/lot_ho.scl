@@ -1,0 +1,39 @@
+// Higher-order leap-of-thought
+
+// Question and Context
+type question(rela: usize, sub: usize, obj: usize)
+type context(rela: usize, sub: usize, obj: usize, validity: bool)
+
+// Entity level relationships
+type synonym(a: usize, b: usize)
+// type antonym(a: usize, b: usize)
+
+// Relation level higher-order relationships
+type implies(r1: usize, r2: usize)
+type implies_not(r1: usize, r2: usize)
+type inverse(r1: usize, r2: usize)
+type inverse_not(r1: usize, r2: usize)
+type transitive(r1: usize, r2: usize, r3: usize)
+type transitive_not(r1: usize, r2: usize, r3: usize)
+
+// Things can be derived through context propagation
+rel derived(r, s, o, v) = context(r, s, o, v)
+
+// Implication
+rel implies(r, r) = question(r, _, _)
+rel implies(r, r) = context(r, _, _, _)
+rel derived(r2, s, o, v) = implies(r1, r2), derived(r1, s, o, v)
+rel derived(r2, s, o, !v) = implies_not(r1, r2), derived(r1, s, o, v)
+
+// Inversion
+rel derived(r2, o, s, v) = inverse(r1, r2), derived(r1, s, o, v)
+rel derived(r2, o, s, !v) = inverse_not(r1, r2), derived(r1, s, o, v)
+
+// Transitive
+rel derived(r3, x, z, v1 && v2) = transitive(r1, r2, r3), derived(r1, x, y1, v1), synonym(y1, y2), derived(r2, y2, z, v2)
+rel derived(r3, x, z, !v1 || !v2) = transitive_not(r1, r2, r3), derived(r1, x, y1, v1), synonym(y1, y2), derived(r2, y2, z, v2)
+
+// Answer
+rel answer(v) =
+  derived(r, s, o, v), question(rq, sq, oq),
+  implies(r, rq), synonym(s, sq), synonym(o, oq)

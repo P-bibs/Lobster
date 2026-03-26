@@ -1,0 +1,21 @@
+import "../scallop/infer_structure.scl"
+
+// RNA
+rel rna("UUUCCUGCUUCAACAGUGCUUGGAUGGAAC")
+rel nucleotide(i, n) = rna(rna) and string_chars(rna, i, nc) and char_to_nucleotide(nc, n)
+
+// UUUCCUGCUUCAACAGUGCUUGGAUGGAAC
+// (((((...(((((......))))).)))))
+rel token = {
+  (0, 0), (1, 0), (2, 0), (3, 0), (4, 2), (5, 4), (6, 4), (7, 4), (8, 0), (9, 0),
+  (10, 0), (11, 0), (12, 2), (13, 4), (14, 4), (15, 4), (16, 4), (17, 4), (18, 4), (19, 3), (20, 1),
+  (21, 1), (22, 1), (23, 1), (24, 4), (25, 3), (26, 1), (27, 1), (28, 1), (29, 1)
+}
+rel length(30)
+
+// query pair
+// query intern_loop
+// query nucleotide_pair
+// query unpaired
+// query well_formed
+// query well_formed_base

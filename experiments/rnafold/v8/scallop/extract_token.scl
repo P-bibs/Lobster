@@ -1,0 +1,70 @@
+// ================================================================================================================
+// ==== Extracting Token given a secondary structure in dot-bracket form
+//
+// Input:
+//   ss(".((..)).")
+//
+// Output:
+//   token(0, DANGLE)
+//   token(1, HELIX_STACK_LEFT)
+//   token(2, LOOP_LEFT)
+//   token(3, LOOP_UNPAIRED)
+//   token(4, LOOP_UNPAIRED)
+//   token(5, LOOP_RIGHT)
+//   token(6, HELIX_STACK_RIGHT)
+//   token(7, DANGLE)
+
+import "token.scl"
+
+// ================================================================================================================
+// ==== Input and output
+
+// The input secondary structure in dot-bracket form
+type ss(ss: String)
+
+// Pre-processing data
+rel form(i, c) = ss(ss) and string_chars(ss, i, c)
+rel paired(i) = form(i, '(') or form(i, ')')
+rel len($string_length(ss)) = ss(ss)
+
+// The output
+type token(i: usize, t: Token)
+query token
+
+// ================================================================================================================
+// ==== Main recursion
+
+// unpaired region
+rel unpaired_region_helper(0, 0) = form(0, '.')
+rel unpaired_region_helper(i, i) = paired(i - 1) and form(i, '.')
+rel unpaired_region_helper(i, j) = unpaired_region_helper(i, j - 1) and form(j, '.')
+rel unpaired_region(i, j) = unpaired_region_helper(i, j) and len(n) and j == n - 1
+rel unpaired_region(i, j) = unpaired_region_helper(i, j) and paired(j + 1)
+
+// helix stacking: ( + HELIX_STACK + )
+rel helix_stack(i, i + 1) = form(i, '(') and form(i + 1, ')')
+rel helix_stack(i, j) = form(i, '(') and substructure(i + 1, j - 1) and form(j, ')')
+rel { token(i, HELIX_STACK_LEFT), token(j, HELIX_STACK_RIGHT) } = helix_stack(i, j)
+
+// loop: ( + UNPAIRED? + LOOP + UNPAIRED + ... )
+rel loop_base(i, j) = form(i, '(') and substructure(i + 1, j) and not form(j + 1, ')')
+rel loop_base(i, j) = form(i, '(') and unpaired_region(i + 1, j)
+rel loop_base(i, j) = loop_base(i, k) and substructure(k + 1, j)
+rel loop_base(i, j) = loop_base(i, k) and unpaired_region(k + 1, j)
+rel loop(i, j) = loop_base(i, j - 1) and form(j, ')')
+rel { token(i, INTERN_LOOP_LEFT), token(j, INTERN_LOOP_RIGHT) } = loop(i, j)
+rel { intern_unpaired(k), token(k, INTERN_LOOP_UNPAIRED) } = unpaired_region(i, j) and not extern_region(i, j) and range<usize>(i, j + 1, k)
+
+// General substructures
+rel substructure(i, j) = helix_stack(i, j)
+rel substructure(i, j) = loop(i, j)
+
+// full structure is well-formed if...
+rel well_formed_until(i) = substructure(0, i)
+rel { extern_region(0, i), well_formed_until(i) } = unpaired_region(0, i)
+rel well_formed_until(j) = well_formed_until(i) and substructure(i + 1, j)
+rel { extern_region(i + 1, j), well_formed_until(j) } = well_formed_until(i) and unpaired_region(i + 1, j)
+rel token(k, EXT_LOOP_UNPAIRED) = extern_region(i, j) and range<usize>(i, j + 1, k)
+
+// Well-formed if the whole string can be parsed
+rel well_formed() = well_formed_until(n) and len(n + 1)

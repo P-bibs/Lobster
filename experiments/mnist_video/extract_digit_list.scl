@@ -1,0 +1,14 @@
+type frame_digit(frame_id: i32, digit: i32) // The mapping from frame to digit
+type frame_changed(frame_id: i32) // Whether the frame has changed from previous frame
+
+// The first frame is special, the first digit is going to be the digit of the first frame
+rel digits(0, 0, digit) = frame_digit(0, digit)
+
+// If the previous frame has the same digit as the current frame, then we keep the same id
+rel digits(x, id, digit) = digits(x - 1, id, digit) and frame_digit(x, digit) and not frame_changed(x)
+
+// If the previous frame is different than the current frame, then we increment the id
+rel digits(x, id + 1, digit) = digits(x - 1, id, _) and frame_digit(x, digit) and frame_changed(x)
+
+// The final results are id and digit pairs
+rel extracted(id, digit) = digits(_, id, digit)

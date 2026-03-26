@@ -1,0 +1,28 @@
+import "token.scl"
+
+// ================================================================================================================
+// ==== Input and output
+
+// Input: sequence and tokens
+type nucleotide(i: u32, n: Nucleotide) // not probabilistic, each i is mapped to exactly 1 nucleotide
+type token(i: u32, token: Token) // probabilistic (produced by neural network), N * len(STRUCTURE_TOKENS)
+type length(n: u32) // N
+
+// Output: pairs and unpaired neucleotides
+type pair(i: u32, j: u32)
+type unpaired(i: u32)
+
+// ================================================================================================================
+// ==== Main inference algorithm
+
+// Nucleotide pair
+rel nucleotide_pair(i, j) = nucleotide(i, x_i) and nucleotide(j, x_j) and pair_type(x_i, x_j) and i < j
+
+rel structure(i, i) = token(i, UNPAIRED)
+rel { structure(i, j), helix_pair(i, j) } = token(i, LEFT) and structure(i + 1, j - 1) and token(j, RIGHT) and nucleotide_pair(i, j)
+rel structure(i, k) = structure(i, j) and structure(j + 1, k)
+
+rel well_formed() = length(n) and structure(0, n - 1)
+
+rel pair(i, j) = well_formed() and helix_pair(i, j)
+rel unpaired(i) = well_formed() and token(i, UNPAIRED)

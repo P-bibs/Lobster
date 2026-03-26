@@ -1,0 +1,49 @@
+/// Floating Point trait (f32, f64)
+pub trait Float:
+  Sized
+  + Copy
+  + Clone
+  + PartialEq
+  + PartialOrd
+  + std::fmt::Debug
+  + std::fmt::Display
+  + std::ops::Add<Self, Output = Self>
+  + std::ops::Sub<Self, Output = Self>
+  + std::ops::Mul<Self, Output = Self>
+  + std::ops::Div<Self, Output = Self>
+  + std::convert::TryInto<f64>
+{
+  fn zero() -> Self;
+
+  fn one() -> Self;
+
+  fn from_f64(f: f64) -> Self;
+}
+
+impl Float for f32 {
+  fn zero() -> Self {
+    0.0
+  }
+
+  fn one() -> Self {
+    1.0
+  }
+
+  fn from_f64(f: f64) -> Self {
+    f as f32
+  }
+}
+
+impl Float for f64 {
+  fn zero() -> Self {
+    0.0
+  }
+
+  fn one() -> Self {
+    1.0
+  }
+
+  fn from_f64(f: f64) -> Self {
+    f
+  }
+}

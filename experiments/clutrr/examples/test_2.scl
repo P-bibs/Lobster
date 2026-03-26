@@ -1,0 +1,79 @@
+import "../scl/clutrr.scl"
+
+// Context:
+//   [gabrielle] asked her son [christopher] if he could cut her grass because she sprained her ankle. he said he would and brought his daughter [anna] when he came
+// Question:
+//   What is the relationship between anna and gabrielle?
+
+rel context = {
+  0.01::(0, "christopher", "gabrielle"),
+  0.01::(1, "christopher", "gabrielle"),
+  0.01::(2, "christopher", "gabrielle"),
+  0.01::(3, "christopher", "gabrielle"),
+  0.01::(4, "christopher", "gabrielle"),
+  0.01::(5, "christopher", "gabrielle"),
+  0.01::(6, "christopher", "gabrielle"),
+  0.01::(7, "christopher", "gabrielle"),
+  0.01::(8, "christopher", "gabrielle"),
+  0.81::(9, "christopher", "gabrielle"),
+  0.01::(10, "christopher", "gabrielle"),
+  0.01::(11, "christopher", "gabrielle"),
+  0.01::(12, "christopher", "gabrielle"),
+  0.01::(13, "christopher", "gabrielle"),
+  0.01::(14, "christopher", "gabrielle"),
+  0.01::(15, "christopher", "gabrielle"),
+  0.01::(16, "christopher", "gabrielle"),
+  0.01::(17, "christopher", "gabrielle"),
+  0.01::(18, "christopher", "gabrielle"),
+  0.01::(19, "christopher", "gabrielle"),
+}
+
+rel context = {
+  0.01::(0, "anna", "gabrielle"),
+  0.01::(1, "anna", "gabrielle"),
+  0.01::(2, "anna", "gabrielle"),
+  0.01::(3, "anna", "gabrielle"),
+  0.01::(4, "anna", "gabrielle"),
+  0.01::(5, "anna", "gabrielle"),
+  0.01::(6, "anna", "gabrielle"),
+  0.01::(7, "anna", "gabrielle"),
+  0.01::(8, "anna", "gabrielle"),
+  0.01::(9, "anna", "gabrielle"),
+  0.01::(10, "anna", "gabrielle"),
+  0.01::(11, "anna", "gabrielle"),
+  0.01::(12, "anna", "gabrielle"),
+  0.01::(13, "anna", "gabrielle"),
+  0.01::(14, "anna", "gabrielle"),
+  0.01::(15, "anna", "gabrielle"),
+  0.01::(16, "anna", "gabrielle"),
+  0.01::(17, "anna", "gabrielle"),
+  0.01::(18, "anna", "gabrielle"),
+  0.01::(19, "anna", "gabrielle"),
+}
+
+rel context = {
+  0.01::(0, "anna", "christopher"),
+  0.01::(1, "anna", "christopher"),
+  0.01::(2, "anna", "christopher"),
+  0.01::(3, "anna", "christopher"),
+  0.81::(4, "anna", "christopher"),
+  0.01::(5, "anna", "christopher"),
+  0.01::(6, "anna", "christopher"),
+  0.01::(7, "anna", "christopher"),
+  0.01::(8, "anna", "christopher"),
+  0.01::(9, "anna", "christopher"),
+  0.01::(10, "anna", "christopher"),
+  0.01::(11, "anna", "christopher"),
+  0.01::(12, "anna", "christopher"),
+  0.01::(13, "anna", "christopher"),
+  0.01::(14, "anna", "christopher"),
+  0.01::(15, "anna", "christopher"),
+  0.01::(16, "anna", "christopher"),
+  0.01::(17, "anna", "christopher"),
+  0.01::(18, "anna", "christopher"),
+  0.01::(19, "anna", "christopher"),
+}
+
+rel question = {("anna", "gabrielle")}
+
+query answer

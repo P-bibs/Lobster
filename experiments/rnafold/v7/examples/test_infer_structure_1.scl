@@ -1,0 +1,19 @@
+import "../scallop/infer_structure.scl"
+
+rel token = {
+  (0, DANGLE),
+  (1, HELIX_STACK_LEFT),
+  (2, HAIRPIN_LEFT),
+  (3, HAIRPIN_UNPAIRED),
+  (4, HAIRPIN_UNPAIRED),
+  (5, HAIRPIN_RIGHT),
+  (6, HELIX_STACK_RIGHT),
+  (7, DANGLE),
+}
+rel length(8)
+
+query dangle_region
+query substructure
+query well_formed
+query pair
+query unpaired

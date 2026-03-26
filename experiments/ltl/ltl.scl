@@ -1,0 +1,79 @@
+// Basic types
+type Var = String
+type Obj = u32
+type Time = u32
+
+//////////////////////////
+// Variable assignments //
+//////////////////////////
+
+// Variable assignment mapping
+type VarAssign = Cons(Var, Obj, VarAssign)  // a variable mapped to an object
+               | Nil()  // no more mapping
+
+// The relation storing all the variable assignments
+type var_assign(va: VarAssign)
+
+// Getting object ID from a variable assignment
+type get_obj_id(bound va: VarAssign, bound var_id: Var, obj_id: Obj)
+rel get_obj_id(va, v, o) = case va is Cons(v, o, _)
+rel get_obj_id(va, v, o) = case va is Cons(vp, _, rs) and vp != v and get_obj_id(rs, v, o)
+
+// Helper function to display the variable assignment
+type va_to_str(bound va: VarAssign, s: String)
+rel va_to_str(va, "") = case va is Nil()
+rel va_to_str(va, $format("v({}) |-> o({}), {}", v, o, r)) = case va is Cons(v, o, rva) and va_to_str(rva, r)
+
+//////////////////////////////////
+// Spatial-temporal scene graph //
+//////////////////////////////////
+
+type time(time: Time)
+type cate(o: Obj, name: String)
+type attr(time: Time, attr_name: String, o: Obj, attr_value: String)
+type rela(time: Time, rela_name: String, o1: Obj, o2: Obj)
+
+rel max_time = max(t: time(t))
+
+///////////////////////////////////
+// Specification on scene graphs //
+///////////////////////////////////
+
+// TForm: temporal formula, containing `Global`, `Finally`, `Until`, and `Next`
+type TForm = Global(TForm) | Finally(TForm) | Until(TForm, TForm) | Next(TForm) | Logic(LForm)
+
+// LForm: logical formula, containing logical conjunction and atomic queries
+type LForm = And(LForm, LForm) | CateAtom(Var, String) | AttrAtom(Var, String, String) | RelaAtom(Var, Var, String)
+
+// The specification
+type spec(psi: TForm)
+
+// Aligning logical formula: the formula `phi` is aligned with the scene graph starting from time `s`, given the variable assignment `va`
+type align_lform(bound va: VarAssign, phi: LForm, s: Time)
+rel align_lform(va, phi, s) = case phi is And(l, r) and align_lform(va, l, s) and align_lform(va, r, s)
+rel align_lform(va, phi, s) = case phi is CateAtom(var, c) and get_obj_id(va, var, o) and cate(o, c) and time(s)
+rel align_lform(va, phi, s) = case phi is AttrAtom(var, attr, val) and get_obj_id(va, var, o) and attr(s, attr, o, val)
+rel align_lform(va, phi, s) = case phi is RelaAtom(v1, v2, rela) and get_obj_id(va, v1, o1) and get_obj_id(va, v2, o2) and rela(s, rela, o1, o2)
+
+// Aligning temporal formula: the formula `psi` is aligned with the scene graph starting from time `s`, given the variable assignment `va`
+type align_tform(bound va: VarAssign, psi: TForm, s: Time)
+rel align_tform(va, psi, s) = case psi is Global(p1) and max_time(n) and align_all_tform(va, p1, s, n)
+rel align_tform(va, psi, s) = case psi is Finally(p1) and align_once_tform(va, p1, s)
+rel align_tform(va, psi, s) = case psi is Until(p1, p2) and time(t) and s < t and align_all_tform(va, p1, s, t - 1) and align_tform(va, p2, t)
+rel align_tform(va, psi, s) = case psi is Next(p1) and align_tform(va, p1, s + 1) and time(s)
+rel align_tform(va, psi, s) = case psi is Logic(p1) and align_lform(va, p1, s)
+
+// Helper relations
+type align_once_tform(bound va: VarAssign, psi: TForm, s: Time)
+rel align_once_tform(va, psi, s) = align_tform(va, psi, s)
+rel align_once_tform(va, psi, s) = align_once_tform(va, psi, s + 1) and time(s)
+type align_all_tform(bound va: VarAssign, psi: TForm, s: Time, t: Time)
+rel align_all_tform(va, psi, s, s) = align_tform(va, psi, s)
+rel align_all_tform(va, psi, s, n + 1) = align_all_tform(va, psi, s, n) and align_tform(va, psi, n + 1) and time(n + 1)
+
+///////////////////////////
+// Solving for alignment //
+///////////////////////////
+
+rel aligned_va(va) = var_assign(va) and spec(psi) and align_tform(va, psi, 0)
+rel aligned_va_str(vas) = aligned_va(va) and va_to_str(va, vas)

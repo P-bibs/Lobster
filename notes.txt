@@ -1,0 +1,46 @@
+USE thrust::PERMUTATION_ITERATOR
+
+Basesline
+1704ms GPU
+552ms CPU
+(115 edges)
+
+Flattening TupleType representation
+1244ms GPu
+438ms CPU
+(115 edges)
+
+Replace modulo with bitmassk in HashIndex
+no improvement
+
+
+Switch from device_vec<Value> to device_buffer
+11177ms GPU
+175 CPU
+(115 edges)
+
+1122ms GPU
+237ms CPU
+
+Remove counting iterator (no change)
+463ms
+14ms
+
+
+454ms
+15.6ms
+
+2532ms
+
+TODO: only construct hash tables once per stratum
+TODO: add FFI struct so I can remove [repr(C)] from DiffMinMaxProb tags
+TODO: make sure DiffMinMaxProb is able to distinguish zero derivatives from derivatives with a value of 0
+TODO: use non-blocking thrust operations for parallelism?
+TODO: what is the use of the saturation function? do I need to worry about it?
+TODO: come up with better solution than moving the entire IDB back to the `recent` relation when executing multiple strata
+TODO: make FFI not use one big unsafe block.
+TODO: support nullary columns for probabilistic static analysis
+
+TODO: figureout why normalize specialize is not called sometimes
+TODO: figure out why managed alloc is taking so long in add_to_all_relations
+TODO: use arena allocator that clears all memory after returning to Rust

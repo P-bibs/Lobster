@@ -1,0 +1,13 @@
+[package]
+name = "type-inference"
+version = "0.1.0"
+authors = ["Ziyang Li <liby99@icloud.com>"]
+edition = "2018"
+
+[build-dependencies]
+lalrpop = { version = "0.19.9", features = ["lexer"] }
+
+[dependencies]
+lalrpop-util = "0.19.9"
+itertools = "0.10"
+ast-derive = { path = "../ast-derive" }

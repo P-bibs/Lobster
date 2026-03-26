@@ -1,0 +1,7 @@
+import "../scallop/extract_token.scl"
+
+rel ss("...((((..((...)).((...))..))))....")
+//  [0]-0123456789abcdefghijklmnopqrstuvwx
+//            [1]-0123456789
+//                      [2]-0123456789
+//                                [3]-0123

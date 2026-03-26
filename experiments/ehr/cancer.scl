@@ -1,0 +1,5 @@
+type TREATMENT = CHEMO | IMMUNO
+
+rel mortality_increase(pat_id) = intervention(pat_id, CHEMO) and weight(pat_id, w) and w < DESIRABLE_WEIGHT
+rel mortality_increase(pat_id) = intervention(pat_id, CHEMO) and weight_loss(pat_id)
+rel weight_loss(pat_id) = intervention(pat_id, CHEMO)

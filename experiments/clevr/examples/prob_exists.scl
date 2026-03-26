@@ -1,0 +1,13 @@
+import "../scl/clevr_eval.scl"
+
+rel scene_expr = {0}
+rel filter_color_expr = {0.95::(1, 0, "blue"), 0.05::(2, 0, "red")}
+rel count_expr = {0.05::(3, 1)}
+rel exists_expr = {0.95::(4, 2)}
+rel root_expr = {3, 4}
+
+rel obj = {1, 2, 3}
+rel color = {(1, "blue"), (2, "blue"), (3, "red")}
+
+query yn_result
+query num_result

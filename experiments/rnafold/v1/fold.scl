@@ -1,0 +1,81 @@
+// The mapping from each base to its ID
+type base_id(base_char: char, base_id: i32)
+rel base_id = {('A', 1), ('C', 2), ('G', 3), ('U', 4)}
+
+// The input
+type rna(seq: String)
+
+// The information to track
+type bond(i: usize, j: usize)
+
+// Basic information to be used
+type base(base_index: usize, base_id: i32)
+rel base(i, bid) = rna(seq) and string_chars(seq, i, b) and base_id(b, bid)
+rel length($string_length(seq)) = rna(seq)
+
+// The output structure
+//
+// structure = {
+//   (
+//     1000 ; bond(1, 10) and bond(2, 9) and bond(3, 8) and bond(4, 7) OR (candidate structure A)
+//     2000 ; bond(2, 10) and bond(3, 9) and bond(4, 7)                OR (candidate structure B)
+//     ...
+//   ) :: ()
+// }
+rel structure() = length(n) and f(0, n)
+
+//////////////////////////////////
+
+// F: Base cases
+type f(bound i: usize, bound j: usize)
+rel f(i, i + 1) = base(i, _)
+rel f(i, j) = f(i + 1, j) and i + 1 < j
+rel f(i, j) = range<usize>(i + 1, j, k) and c(i, k) and f(k + 1, j) and i + 1 < j
+
+// C: Bond
+type c(bound i: usize, bound j: usize)
+rel c(i, j) = i < j and score_hairpin(i, j)                                                                                       // C_HAIRPIN_LOOP
+rel c(i, j) = i < j and range<usize>(i + 1, j - 1, k) and range<usize>(k + 1, j, l) and c(k, l) and score_single_loop(i, j, k, l) // C_INTERNAL_LOOP
+rel c(i, j) = i < j and range<usize>(i + 1, j, u) and m(i + 1, u) and m1(u + 1, j - 1) and score_multi_loop(i, j)                 // C_MULTI_LOOP
+
+// M: Multi Loop
+type m(bound i: usize, bound j: usize)
+rel m(i, j) = range<usize>(i + 1, j, u) and score_multi_unpaired(i, u) and c(u + 1, j) and score_multi_paired(u + 1, j) // M_PAIRED
+rel m(i, j) = range<usize>(i + 1, j, u) and m(i, u) and c(u + 1, j) and score_multi_paired(u + 1, j)                    // M_BIFURCATION
+rel m(i, j) = m(i, j - 1) and score_multi_unpaired(j, j) and i < j - 1                                                  // M_UNPAIRED
+
+// M1: Base Multi Loop
+type m1(bound i: usize, bound j: usize)
+rel m1(i, j) = c(i, j) and score_multi_paired(i, j)                      // M1_PAIRED
+rel m1(i, j) = m1(i, j - 1) and score_multi_unpaired(j, j) and i < j - 1 // M1_UNPAIRED
+
+//////////////////////////////////
+
+// \mathcal{H}(i, j)
+type score_hairpin(bound i: usize, bound j: usize)
+rel score_hairpin(i, j) =
+  base(i, x_i) and base(j, x_j) and base(i + 1, x_ip1) and base(j - 1, x_jm1) and
+  extern_score_hairpin(i, x_i, x_ip1, x_jm1, j, x_j)
+
+// \mathcal{I}(i, j; k, l)
+type score_single_loop(bound i: usize, bound j: usize, bound k: usize, bound l: usize)
+rel score_single_loop(i, j, k, l) =
+  base(i, x_i) and base(i + 1, x_ip1) and base(j - 1, x_jm1) and base(j, x_j) and
+  base(k - 1, x_km1) and base(k, x_k) and base(l, x_l) and base(l + 1, x_lp1) and
+  extern_score_single_loop(i, x_i, x_ip1, x_jm1, j, x_j, x_km1, k, x_k, l, x_l, x_lp1)
+
+// \mathcal{L}(i, j) (a)
+type score_multi_loop(bound i: usize, bound j: usize)
+rel score_multi_loop(i, j) =
+  base(i, x_i) and base(i + 1, x_ip1) and base(j - 1, x_jm1) and base(j, x_j) and
+  extern_score_multi_loop(x_i, x_ip1, x_jm1, x_j)
+
+// \mathcal{P}(i, j) (b)
+type score_multi_paired(bound i: usize, bound j: usize)
+rel score_multi_paired(i, j) =
+  base(i - 1, x_im1) and base(i, x_i) and base(j, x_j) and base(j + 1, x_jp1) and
+  length(n) and extern_score_multi_paired(x_im1, i, x_i, j, x_j, x_jp1, n)
+
+// \mathcal{U}(i, j) (c)
+type score_multi_unpaired(bound i: usize, bound j: usize)
+rel score_multi_unpaired(i, j) = extern_score_multi_unpaired(i, j)

@@ -1,0 +1,778 @@
+import os
+import sys
+import random
+import time
+from pathlib import Path
+import argparse
+from collections import defaultdict
+from typing import Optional
+import multimolecule
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import scallopy
+
+from x_transformers import XTransformer, TransformerWrapper, Decoder, Encoder
+from multimolecule import RnaTokenizer, RnaErnieModel, RnaFmModel
+
+from utils.dataset import BPseqDataset, TOKENS, TOKEN_ID_TO_NAME_MAP, NUCLEOTIDES
+from utils.compbpseq import compare_bpseq, accuracy
+
+THIS_FOLDER = os.path.abspath(os.path.join(__file__, "../"))
+DATA_FOLDER = os.path.abspath(os.path.join(__file__, "../../../data/rnafold"))
+MODEL_FOLDER = os.path.abspath(os.path.join(__file__, "../../../model/rnafold"))
+
+
+class RNASeqBiLSTM(nn.Module):
+    def __init__(self, latent_dim, num_layers, dropout=0.1, max_len=1000):
+        super(RNASeqBiLSTM, self).__init__()
+        # Embedding dimension for each token (A, C, G, U, padding, unknown)
+        self.embedding_dim = 6
+        self.latent_dim = latent_dim
+        self.num_layers = num_layers
+
+        # Linear layer to project one-hot encoded vectors to latent space (B x N x latent_dim)
+        self.input_projection = nn.Linear(self.embedding_dim, latent_dim)
+
+        # Positional encoding (sinusoidal)
+        self.positional_encoding = SinusoidalPositionalEncoding(latent_dim, max_len)
+
+        # BiLSTM Encoder
+        self.bilstm = nn.LSTM(input_size=latent_dim, hidden_size=latent_dim, num_layers=num_layers, dropout=dropout, bidirectional=True, batch_first=True)
+
+        # Output projection (decoder)
+        # Layer Norm after encoding
+        self.layer_norm = nn.LayerNorm(latent_dim * 2)  # Since BiLSTM is bidirectional, hidden size is doubled
+
+        # Decoder (MLP for output prediction)
+        self.fc_out = nn.Sequential(
+            nn.Linear(latent_dim * 2, latent_dim),
+            nn.ReLU(),
+            nn.Linear(latent_dim, len(TOKENS))
+        )
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, sequences, src_key_padding_mask=None):
+        """
+        sequences: List of RNA sequences (B x N strings)
+        returns: Decoded sequences in the output space (B x N x O)
+        """
+        B, N = len(sequences), len(sequences[0])  # Batch size B and sequence length N
+
+        # Step 1: One-hot encode the input RNA sequences (B x N x 5)
+        rna_map = defaultdict(lambda: 5, {'0': 0, 'A': 1, 'a': 1, 'C': 2, 'c': 2, 'G': 3, 'g': 3, 'U': 4, 'u': 4})
+        one_hot = torch.zeros(B, N, self.embedding_dim)
+        for i, seq in enumerate(sequences):
+            for j, char in enumerate(seq):
+                one_hot[i, j, rna_map[char]] = 1
+
+        # Step 2: Project the one-hot encoded tensor to latent_dim (B x N x latent_dim)
+        one_hot = self.input_projection(one_hot)
+
+        # Step 3: Add positional encoding to the one-hot tensor (B x N x latent_dim)
+        one_hot = self.positional_encoding(one_hot)
+
+        # Step 4: Pass the sequence through the BiLSTM (B x N x 2 * latent_dim)
+        lstm_output, _ = self.bilstm(one_hot)
+
+        # Step 5: Layer normalization after the BiLSTM
+        lstm_output = self.layer_norm(lstm_output)
+
+        # Step 6: Decode to output dimension using MLP (B x N x O)
+        output = self.fc_out(self.dropout(lstm_output))
+        return torch.softmax(output, dim=-1)
+
+
+class SinusoidalPositionalEncoding(nn.Module):
+    def __init__(self, latent_dim, max_len=500):
+        super(SinusoidalPositionalEncoding, self).__init__()
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, latent_dim, 2).float() * (-torch.log(torch.tensor(10000.0)) / latent_dim))
+        pe = torch.zeros(max_len, latent_dim)
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1), :]
+
+
+class RNASeqTransformer(nn.Module):
+    def __init__(self, latent_dim, num_heads, num_layers, dropout=0.1, max_len=1000):
+        super(RNASeqTransformer, self).__init__()
+
+        # Embedding dimension for each token (A, C, G, U, padding, unknown)
+        self.embedding_dim = 6
+        self.latent_dim = latent_dim
+
+        # Linear layer to project one-hot encoded vectors to latent space (B x N x latent_dim)
+        self.input_projection = nn.Linear(self.embedding_dim, latent_dim)
+
+        # Positional encoding (sinusoidal)
+        self.positional_encoding = SinusoidalPositionalEncoding(latent_dim, max_len)
+
+        # Transformer Encoder
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=latent_dim, nhead=num_heads, dropout=dropout)
+        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=num_layers)
+
+        # Output projection (decoder)
+        # Layer Norm after encoding
+        self.layer_norm = nn.LayerNorm(latent_dim)
+
+        # Decoder (MLP for output prediction)
+        self.fc_out = nn.Sequential(
+            nn.Linear(latent_dim, latent_dim // 2),
+            nn.ReLU(),
+            nn.Linear(latent_dim // 2, len(TOKENS))
+        )
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, sequences, src_key_padding_mask=None):
+        """
+        sequences: List of RNA sequences (B x N strings)
+        returns: Decoded sequences in the output space (B x N x O)
+        """
+        B, N = len(sequences), len(sequences[0])  # Batch size B and sequence length N
+
+        # Step 1: One-hot encode the input RNA sequences (B x N x 5)
+        rna_map = defaultdict(lambda: 5, {'0': 0, 'A': 1, 'a': 1, 'C': 2, 'c': 2, 'G': 3, 'g': 3, 'U': 4, 'u': 4})
+        one_hot = torch.zeros(B, N, self.embedding_dim)
+
+        for i, seq in enumerate(sequences):
+            for j, char in enumerate(seq):
+                one_hot[i, j, rna_map[char]] = 1
+
+        # Step 2: Project the one-hot encoded tensor to latent_dim (B x N x latent_dim)
+        one_hot = self.input_projection(one_hot)
+
+        # Step 3: Add positional encoding to the one-hot tensor (B x N x latent_dim)
+        one_hot = self.positional_encoding(one_hot)
+
+        # Step 4: Use the transformer to encode the sequence (B x N x latent_dim)
+        encoded = self.transformer_encoder(one_hot, src_key_padding_mask=src_key_padding_mask)
+
+        # Step 5: Layer normalization after the transformer
+        encoded = self.layer_norm(encoded)
+
+        # Step 6: Decode to output dimension using MLP (B x N x O)
+        output = self.fc_out(self.dropout(encoded))
+        return torch.softmax(output, dim=-1)
+
+
+class RNASeqXTransformer(nn.Module):
+    def __init__(self, latent_dim, num_heads, num_layers, dropout=0.1, max_len=1000):
+        super(RNASeqXTransformer, self).__init__()
+        self.model = XTransformer(
+            dim = latent_dim,
+            enc_num_tokens = 6,
+            enc_depth = num_layers,
+            enc_heads = num_heads,
+            enc_max_seq_len = max_len,
+            dec_num_tokens = len(TOKENS),
+            dec_depth = num_layers,
+            dec_heads = num_heads,
+            dec_max_seq_len = max_len,
+            # tie_token_emb = True  # tie embeddings of encoder and decoder
+        )
+        # Decoder (MLP for output prediction)
+        self.fc_out = nn.Sequential(
+            nn.Linear(latent_dim, latent_dim // 2),
+            # nn.Dropout(dropout),
+            nn.ReLU(),
+            nn.Linear(latent_dim // 2, latent_dim // 4),
+            # nn.Dropout(dropout),
+            nn.ReLU(),
+            nn.Linear(latent_dim // 4, len(TOKENS)),
+        )
+
+    def forward(self, sequences, ref_tokens):
+        B, N = len(sequences), len(sequences[0])  # Batch size B and sequence length N
+        rna_map = defaultdict(lambda: 5, {'0': 0, 'A': 1, 'a': 1, 'C': 2, 'c': 2, 'G': 3, 'g': 3, 'U': 4, 'u': 4})
+        nucleotides = torch.zeros(B, N)
+        mask = torch.zeros_like(nucleotides).bool()
+        for i, seq in enumerate(sequences):
+            for j, char in enumerate(seq):
+                nucleotides[i, j] = rna_map[char]
+                mask[i, j] = char != '0'
+        target = torch.argmax(ref_tokens, dim=2)
+        encoded = self.model.encoder(nucleotides, mask=mask) # (B, N, len(TOKEN))
+        result = self.fc_out(encoded)
+        result = torch.softmax(result, dim=2)
+        return result
+
+
+class RNAErnieForNucleotideClassification(nn.Module):
+    def __init__(self, latent_dim, num_heads, num_layers, dropout=0.1, max_len=1000):
+        super(RNAErnieForNucleotideClassification, self).__init__()
+        self.tokenizer = RnaTokenizer.from_pretrained('multimolecule/rnaernie')
+        self.model = RnaErnieModel.from_pretrained('multimolecule/rnaernie')
+        self.fc_out = nn.Sequential(
+            nn.Linear(768, 128), nn.ReLU(),
+            nn.Linear(128, 128), nn.ReLU(),
+            nn.Linear(128, len(TOKENS)))
+
+    def forward(self, sequences, ref_tokens):
+        (B, N, _) = ref_tokens.shape
+        input = self.tokenizer(sequences, return_tensors='pt')
+        output = self.model(**input)
+        result = self.fc_out(output.last_hidden_state[:, :N, :])
+        result = torch.softmax(result, dim=2)
+        return result
+
+
+class RNAFMForNucleotideClassification(nn.Module):
+    def __init__(self, latent_dim, num_heads, num_layers, dropout=0.1, max_len=1000):
+        super(RNAFMForNucleotideClassification, self).__init__()
+        self.tokenizer = RnaTokenizer.from_pretrained('multimolecule/rnafm')
+        self.model = RnaFmModel.from_pretrained('multimolecule/rnafm')
+        self.fc_out = nn.Sequential(
+            nn.Linear(640, 128), nn.ReLU(),
+            nn.Linear(128, 128), nn.ReLU(),
+            nn.Linear(128, len(TOKENS)))
+
+    def forward(self, sequences, ref_tokens):
+        device = ref_tokens.device
+        (B, N, _) = ref_tokens.shape
+        input = self.tokenizer(sequences, return_tensors='pt').to(device)
+        output = self.model(**input) # B x N x 640
+        result = self.fc_out(output.last_hidden_state[:, 1:N+1, :])
+        result = torch.softmax(result, dim=2)
+        return result
+
+
+class Train:
+    def __init__(self):
+        self.step = 0
+
+        self.infer_structure = scallopy.Context(provenance="difftopkproofs", k=1)
+        self.infer_structure.import_file(f"{THIS_FOLDER}/scallop/infer_structure.scl")
+        self.infer_structure.set_non_probabilistic(["length", "nucleotide"])
+
+        self.train_loader = None
+        self.test_loader = None
+
+    def train(self, epoch):
+        self.model.train()
+        n_dataset = len(self.train_loader.dataset)
+        loss_total, token_acc_total, num = 0, 0, 0
+        running_loss, n_running_loss = 0, 0
+        sen_total, ppv_total, fval_total, mcc_total = 0, 0, 0, 0
+        # start = time.time()
+        gt_token_stats, pred_token_stats = defaultdict(lambda: 0), defaultdict(lambda: 0)
+        with tqdm(total=n_dataset, disable=self.disable_progress_bar) as pbar:
+            pbar.set_description(f"[Train Epoch {epoch}]")
+            for batch_id, (fnames, seqs, ref_structures, dot_brackets, ref_tokens) in enumerate(self.train_loader):
+                n_batch = len(seqs)
+                self.optimizer.zero_grad()
+                y = self.model(seqs, ref_tokens.to(self.device))
+
+                # # Adjacency matrix
+                # adj_mat = self.parse_prob_tokens_to_structure(y, seqs, retain_k=self.inference_retain_k)
+                # bps = self.generate_bpseq_from_adj_mat(adj_mat)
+
+                # Loss function
+                loss = self.loss(y, ref_tokens.to(self.device), None, ref_structures, seqs)
+                loss_total += loss.item()
+                if loss.item() > 0.:
+                    loss.backward()
+                    self.optimizer.step()
+
+                # Compute statistics
+                self.populate_token_stats(y, seqs, pred_token_stats)
+                self.populate_token_stats(ref_tokens, seqs, gt_token_stats)
+
+                # Compute token accuracy
+                token_acc_total += self.compute_token_accuracy(y.to("cpu"), ref_tokens)
+
+                # # Compute structure accuracy (prec/rec/f1)
+                # for header, ref, bp in zip(fnames, ref_structures, bps):
+                #     x = compare_bpseq(ref, bp)
+                #     [sen, ppv, fval, mcc] = list(accuracy(*x))
+                #     sen_total += sen
+                #     ppv_total += ppv
+                #     fval_total += fval
+                #     mcc_total += mcc
+
+                denom = batch_id + 1
+                num += n_batch
+                pbar.set_postfix(
+                    loss='{:.2e}'.format(loss_total / denom),
+                    token_acc='{:.2f}'.format(token_acc_total / denom),
+                    sen=f'{sen_total / num:.2f}',
+                    ppv=f'{ppv_total / num:.2f}',
+                    fval=f'{fval_total / num:.2f}',
+                )
+                pbar.update(n_batch)
+
+                running_loss += loss.item()
+                n_running_loss += n_batch
+                if n_running_loss >= 100 or num >= n_dataset:
+                    running_loss /= n_running_loss
+                    if self.writer is not None:
+                        self.writer.add_scalar("train/loss", running_loss, (epoch-1) * n_dataset + num)
+                    running_loss, n_running_loss = 0, 0
+
+        if self.verbose:
+            self.print_token_stats("GT", gt_token_stats)
+            self.print_token_stats("Pred", pred_token_stats)
+
+        # elapsed_time = time.time() - start
+        # pbar.set_description(f"[Train Epoch {epoch}] Time: {elapsed_time:.3f}s")
+
+    def test(self, epoch):
+        self.model.eval()
+        n_dataset = len(self.test_loader.dataset)
+        loss_total, token_acc_total, num = 0, 0, 0
+        sen_total, ppv_total, fval_total, mcc_total = 0, 0, 0, 0
+        gt_token_stats, pred_token_stats = defaultdict(lambda: 0), defaultdict(lambda: 0)
+        # start = time.time()
+        with torch.no_grad(), tqdm(total=n_dataset, disable=self.disable_progress_bar) as pbar:
+            pbar.set_description(f"[Test Epoch {epoch}]")
+            for batch_id, (fnames, seqs, ref_structures, dot_brackets, ref_tokens) in enumerate(self.test_loader):
+                n_batch = len(seqs)
+                y = self.model(seqs, ref_tokens.to(self.device))
+                adj_mat = self.parse_prob_tokens_to_structure(y, seqs, retain_k=self.inference_retain_k)
+                bps = self.generate_bpseq_from_adj_mat(adj_mat)
+
+                loss = self.loss(y, ref_tokens.to(self.device), adj_mat, ref_structures, seqs)
+                loss_total += loss.item()
+                token_acc_total += self.compute_token_accuracy(y.to("cpu"), ref_tokens)
+
+                # Compute statistics
+                self.populate_token_stats(y, seqs, pred_token_stats)
+                self.populate_token_stats(ref_tokens, seqs, gt_token_stats)
+                for header, ref, bp in zip(fnames, ref_structures, bps):
+                    x = compare_bpseq(ref, bp)
+                    [sen, ppv, fval, mcc] = list(accuracy(*x))
+                    sen_total += sen
+                    ppv_total += ppv
+                    fval_total += fval
+                    mcc_total += mcc
+
+                denom = batch_id + 1
+                num += n_batch
+                pbar.set_postfix(
+                    loss='{:.3e}'.format(loss_total / denom),
+                    token_acc='{:.2f}'.format(token_acc_total / denom),
+                    sen=f"{sen_total / num:.3f}",
+                    ppv=f"{ppv_total / num:.3f}",
+                    fval=f"{fval_total / num:.3f}",
+                )
+                pbar.update(n_batch)
+
+        if self.verbose:
+            self.print_token_stats("GT", gt_token_stats)
+            self.print_token_stats("Pred", pred_token_stats)
+
+        if self.writer is not None:
+            self.writer.add_scalar("test/loss", loss_total / num, epoch * n_dataset)
+        # elapsed_time = time.time() - start
+        # pbar.set_description(f"[Test Epoch {epoch}]\tLoss: {loss_total / num:.6f}\tTime: {elapsed_time:.3f}s")
+
+    def sanity_check(self):
+        n_dataset = len(self.train_loader.dataset)
+        loss_total, token_acc_total, num = 0, 0, 0
+        sen_total, ppv_total, fval_total, mcc_total = 0, 0, 0, 0
+        with torch.no_grad(), tqdm(total=n_dataset, disable=self.disable_progress_bar) as pbar:
+            pbar.set_description(f"[Sanity Checking]")
+            for batch_id, (_, seqs, ref_structures, dot_brackets, ref_tokens) in enumerate(self.train_loader):
+                n_batch = len(seqs)
+                adj_mat = self.parse_prob_tokens_to_structure(ref_tokens, seqs, retain_k=1)
+                bps = self.generate_bpseq_from_adj_mat(adj_mat)
+                for dp_idx, (ref, bp) in enumerate(zip(ref_structures, bps)):
+                    length = len(dot_brackets[dp_idx])
+                    x = compare_bpseq(ref, bp)
+                    [sen, ppv, fval, mcc] = list(accuracy(*x))
+                    sen_total += sen
+                    ppv_total += ppv
+                    fval_total += fval
+                    mcc_total += mcc
+
+                    acc = len([e for e in ref == bp if e]) / len(bp)
+                    if acc < 1:
+                        print("Error detected:")
+                        print(f" - Sequence:     {seqs[dp_idx]}")
+                        print(f" - Dot-Bracket:  {dot_brackets[dp_idx]}")
+                        print(f" - Ground Truth: {ref[:length]}")
+                        print(f" - Predicted:    {bp[:length]}")
+                    # else:
+                    #     print(f"Success:")
+                    #     print(f" - Sequence:     {seqs[dp_idx]}")
+                    #     print(f" - Dot-Bracket:  {dot_brackets[dp_idx]}")
+                    #     print(f" - Ground Truth: {ref[:length]}")
+                    #     print(f" - Predicted:    {bp[:length]}")
+                num += n_batch
+                pbar.set_postfix(sen=f"{sen_total / num:.3f}", ppv=f"{ppv_total / num:.3f}", fval=f"{fval_total / num:.3f}")
+                pbar.update(n_batch)
+
+    def compute_token_accuracy(self, y, ref_tokens):
+        ref_token_ids = torch.argmax(ref_tokens, dim=2).view(-1)
+        pred_token_ids = torch.argmax(y, dim=2).view(-1)
+        token_acc = float(torch.sum(ref_token_ids == pred_token_ids)) / len(ref_token_ids)
+        return token_acc
+
+    def print_token_stats(self, name, token_stats):
+        s = "{ "
+        for (i, token_type) in enumerate(TOKENS):
+            if i > 0: s += ", "
+            s += f"{token_type}: {token_stats[token_type]}"
+        s += " }"
+        print(f"{name}: {s}")
+
+    def to_scallop_facts(self, y, seqs, dp_idx):
+        s = ""
+        for (i, row) in enumerate(y[dp_idx]):
+            s += "rel token = {"
+            for (j, p) in enumerate(row):
+                if j > 0:
+                    s += "; "
+                s += f"{float(p):.3f}::({i}, {TOKEN_ID_TO_NAME_MAP[j]})"
+            s += "}\n"
+        return s
+
+    def save_checkpoint(self, outdir, epoch):
+        filename = os.path.join(outdir, 'epoch-{}'.format(epoch))
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict()
+        }, filename)
+
+    def resume_checkpoint(self, filename):
+        checkpoint = torch.load(filename)
+        epoch = checkpoint['epoch']
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        return epoch
+
+    def build_optimizer(self, optimizer, params, lr, l2_weight):
+        if optimizer == 'Adam':
+            return optim.Adam(params, lr=lr, amsgrad=False, weight_decay=l2_weight)
+        elif optimizer =='AdamW':
+            return optim.AdamW(params, lr=lr, amsgrad=False, weight_decay=l2_weight)
+        elif optimizer == 'RMSprop':
+            return optim.RMSprop(params, lr=lr, weight_decay=l2_weight)
+        elif optimizer == 'SGD':
+            return optim.SGD(params, nesterov=True, lr=lr, momentum=0.9, weight_decay=l2_weight)
+        elif optimizer == 'ASGD':
+            return optim.ASGD(params, lr=lr, weight_decay=l2_weight)
+        else:
+            raise('not implemented')
+
+    def loss(self, y, gt_tokens, adj_mat, ref_structures, seqs, dot_brackets=None):
+        # Token prediction loss
+        l1 = self.loss_fn(y, gt_tokens)
+
+        # # Structure prediction loss
+        # (B, N, N) = adj_mat.shape
+        # gt_adj_mat = self.generate_adj_matrix_from_bp_seq(ref_structures)
+        # l2 = self.loss_fn_2(torch.softmax(adj_mat.reshape(B * N, N), dim=1), gt_adj_mat.reshape(B * N, N))
+
+        # Return the combination of the two losses
+        return l1 # + 0.2 * l2
+
+    def populate_token_stats(self, tokens_tensor, seqs, stats = defaultdict(lambda: 0)):
+        for (tokens, seq) in zip(tokens_tensor, seqs):
+            for i in range(len(seq)):
+                token_name = TOKENS[torch.argmax(tokens[i])]
+                stats[token_name] += 1
+        return stats
+
+    def generate_adj_matrix_from_bp_seq(self, gt_bp_seqs):
+        B, Np1 = gt_bp_seqs.shape
+        target = torch.zeros((B, Np1, Np1))
+        for (dp_idx, row) in enumerate(gt_bp_seqs):
+            for (i, j) in enumerate(row):
+                target[dp_idx, i, j] = 1
+        return target
+
+    def generate_dot_bracket_from_pair_index_matrix(self, seq, pair_id_matrix):
+        N = len(seq)
+        ss = ""
+        for (i, j) in enumerate(pair_id_matrix):
+            if i == 0: continue
+            if j > 0: ss += '(' if j > i else ')'
+            else: ss += '.'
+        return ss
+
+    def parse_prob_tokens_to_structure(self, y, seqs, retain_k: Optional[int] = None, sample_with_categorical: bool = False):
+        (B, N, F) = y.shape
+        pred_structure = torch.zeros((B, N + 1, N + 1))
+        for (dp_idx, prob_tokens) in enumerate(y):
+            seq = seqs[dp_idx].replace("0", "")
+            length = len(seq)
+            nucleotide_facts = [(i, j) for (i, n) in enumerate(seq) for j in NUCLEOTIDES[n.upper()]]
+
+            # Prepare the probabilistic input
+            if retain_k is not None:
+                token_facts = []
+                token_disjunctions = [[] for _ in range(length)]
+                for i in range(length):
+                    if sample_with_categorical:
+                        sampled = torch.distributions.Categorical(prob_tokens[i]).sample_n(retain_k)
+                        values, indices = list(sampled.values().to_dense()), list(sampled.indices().to_dense())
+                    else:
+                        sampled = torch.topk(prob_tokens[i, :-1], retain_k, dim=0)
+                        values, indices = list(sampled.values), list(sampled.indices)
+                    for (p, j) in zip(values, indices):
+                        fact_id = len(token_facts)
+                        token_facts.append((p, (i, j)))
+                        token_disjunctions[i].append(fact_id)
+            else:
+                token_facts = [(prob_tokens[i, j], (i, j)) for i in range(length) for j in range(F)]
+                token_disjunctions = [[i * F + j for j in range(F)] for i in range(length)]
+
+            # Execute the scallop program
+            length_facts = [(len(seq),)]
+            temp_ctx = self.infer_structure.clone()
+            temp_ctx.add_facts("token", token_facts, disjunctions=token_disjunctions)
+            temp_ctx.add_facts("length", length_facts)
+            temp_ctx.add_facts("nucleotide", nucleotide_facts)
+
+            os.environ['STRATUM'] = '10,10'
+            temp_ctx.run()
+            del os.environ['STRATUM']
+
+            # Vectorize the output into
+            pred_structure[dp_idx, 0, 0] = 1
+            for (p, (i, j)) in temp_ctx.relation("pair"):
+                pred_structure[dp_idx, i + 1, j + 1] += p
+                pred_structure[dp_idx, j + 1, i + 1] += p
+            # for (p, (i, j)) in temp_ctx.relation("pair_residual"):
+            #     pred_structure[dp_idx, i + 1, j + 1] += 0.1 * p
+            #     pred_structure[dp_idx, j + 1, i + 1] += 0.1 * p
+            for (p, (i,)) in temp_ctx.relation("unpaired"):
+                pred_structure[dp_idx, i + 1, 0] += p
+            # for (p, (i,)) in temp_ctx.relation("unpaired_residual"):
+            #     pred_structure[dp_idx, i + 1, 0] += 0.1 * p
+            for i in range(len(seqs[dp_idx]), N):
+                pred_structure[dp_idx, i + 1, 0] = 1
+        return pred_structure
+
+    def generate_bpseq_from_adj_mat(self, adj_mat):
+        return adj_mat.argmax(dim=2)
+
+    def build_loss_function(self, loss_func, args):
+        if loss_func == "bce":
+            # self.loss_fn = torch.nn.BCELoss(weight=torch.tensor([0.7, 0.7, 1.0, 1.0, 0.3, 0.3, 0.03]).to(self.device))
+            # self.loss_fn_2 = torch.nn.BCELoss()
+            self.loss_fn = torch.nn.BCELoss()
+        elif loss_func == "mse":
+            self.loss_fn = torch.nn.MSELoss()
+        elif loss_func == "bce_with_logits":
+            self.loss_fn = torch.nn.BCEWithLogitsLoss()
+        elif loss_func == "ce":
+            self.loss_fn = torch.nn.CrossEntropyLoss()
+        else:
+            self.loss_fn = torch.nn.BCELoss()
+
+    def build_model(self, args):
+        if args.model == "transformer":
+            config = { 'latent_dim' : args.embed_size, 'num_layers': args.num_layers, 'num_heads': args.num_heads, 'dropout': args.dropout_rate }
+            model = RNASeqTransformer(**config)
+        elif args.model == "xtransformer":
+            config = { 'latent_dim' : args.embed_size, 'num_layers': args.num_layers, 'num_heads': args.num_heads, 'dropout': args.dropout_rate }
+            model = RNASeqXTransformer(**config)
+        elif args.model == "rnaernie":
+            config = { 'latent_dim' : args.embed_size, 'num_layers': args.num_layers, 'num_heads': args.num_heads, 'dropout': args.dropout_rate }
+            model = RNAErnieForNucleotideClassification(**config)
+        elif args.model == "rnafm":
+            config = { 'latent_dim' : args.embed_size, 'num_layers': args.num_layers, 'num_heads': args.num_heads, 'dropout': args.dropout_rate }
+            model = RNAFMForNucleotideClassification(**config)
+        elif args.model == "bilstm":
+            config = { 'latent_dim' : args.embed_size, 'num_layers': args.num_layers, 'dropout': args.dropout_rate }
+            model = RNASeqBiLSTM(**config)
+        else:
+            raise Exception(f"Unknown model {args.model}")
+        return model, config
+
+    def save_config(self, file, config):
+        with open(file, 'w') as f:
+            for k, v in config.items():
+                k = '--' + k.replace('_', '-')
+                if type(v) is bool: # pylint: disable=unidiomatic-typecheck
+                    if v:
+                        f.write('{}\n'.format(k))
+                elif isinstance(v, list) or isinstance(v, tuple):
+                    for vv in v:
+                        f.write('{}\n{}\n'.format(k, vv))
+                else:
+                    f.write('{}\n{}\n'.format(k, v))
+
+    def run(self, args, conf=None):
+        self.disable_progress_bar = args.disable_progress_bar
+        self.verbose = args.verbose
+        self.writer = None
+        if args.log_dir is not None:
+            os.makedirs(args.log_dir, exist_ok=True)
+
+        train_max_length = args.train_max_length if args.train_max_length else args.max_length
+        if args.train_percentage is None or args.train_percentage > 0:
+            train_dataset = BPseqDataset(args.input, percentage=args.train_percentage, max_length=train_max_length)
+            self.train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=BPseqDataset.collate_fn)
+        if args.test_input is not None and (args.test_percentage is None or args.test_percentage > 0):
+            test_max_length = args.test_max_length if args.test_max_length else args.max_length
+            test_dataset = BPseqDataset(args.test_input, percentage=args.test_percentage, max_length=test_max_length)
+            self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=BPseqDataset.collate_fn)
+
+        if args.seed >= 0:
+            torch.manual_seed(args.seed)
+            random.seed(args.seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+
+        self.model, config = self.build_model(args)
+        config.update({ 'param': args.param })
+        self.inference_retain_k = args.inference_retain_k
+        if args.load_params is not None:
+            if os.path.exists(args.load_params):
+                print(f"[Info] Loading from existing model state dict: {args.load_params}...")
+                self.model.load_state_dict(torch.load(args.load_params))
+                print(f"[Info] Success!")
+            else:
+                print("[Warning] load parameter .tch file not found; resort to initializing the model from scratch")
+
+        if args.init_param != '':
+            init_param = Path(args.init_param)
+            if not init_param.exists() and conf is not None:
+                init_param = Path(conf) / init_param
+            p = torch.load(init_param)
+            if isinstance(p, dict) and 'model_state_dict' in p:
+                p = p['model_state_dict']
+            self.model.load_state_dict(p)
+
+        self.device = torch.device("cpu")
+        if args.gpu >= 0:
+            self.device = torch.device("cuda", args.gpu)
+
+        self.model.to(self.device)
+        self.optimizer = self.build_optimizer(args.optimizer, self.model.parameters(), args.lr, args.l2_weight)
+        self.build_loss_function(args.loss_func, args)
+
+        checkpoint_epoch = 0
+        if args.resume is not None:
+            checkpoint_epoch = self.resume_checkpoint(args.resume)
+
+        if args.sanity_check:
+            self.sanity_check()
+            return
+
+        # if self.test_loader is not None:
+        #     self.test(0)
+        for epoch in range(checkpoint_epoch+1, args.epochs+1):
+            if self.train_loader is not None:
+                self.train(epoch)
+            if self.test_loader is not None:
+                self.test(epoch)
+            if args.log_dir is not None:
+                self.save_checkpoint(args.log_dir, epoch)
+
+            if args.param is not None:
+                model_save_dir = f"{MODEL_FOLDER}/v8/checkpoints/{args.param}_epoch_{epoch}.tch"
+                model_save_folder = os.path.dirname(model_save_dir)
+                os.makedirs(model_save_folder, exist_ok=True)
+                torch.save(self.model.state_dict(), model_save_dir)
+
+        if args.param is not None:
+            model_save_dir = f"{MODEL_FOLDER}/v8/{args.param}.tch"
+            model_save_folder = os.path.dirname(model_save_dir)
+            os.makedirs(model_save_folder, exist_ok=True)
+            torch.save(self.model.state_dict(), model_save_dir)
+        if args.save_config is not None:
+            self.save_config(args.save_config, config)
+
+        return self.model
+
+    @classmethod
+    def add_args(cls, parser):
+        subparser = parser.add_parser('train', help='training')
+        # input
+        subparser.add_argument('input', type=str, help='Training data of the list of BPSEQ-formatted files')
+        subparser.add_argument('--test-input', type=str, help='Test data of the list of BPSEQ-formatted files')
+        subparser.add_argument('--load-params', type=str, help='Loading model file (.tch)')
+        subparser.add_argument('--gpu', type=int, default=-1, help='use GPU with the specified ID (default: -1 = CPU)')
+        subparser.add_argument('--seed', type=int, default=0, metavar='S', help='random seed (default: 0)')
+        subparser.add_argument('--param', type=str, default='param.pth', help='output file name of trained parameters')
+        subparser.add_argument('--init-param', type=str, default='', help='the file name of the initial parameters')
+        subparser.add_argument('--train-percentage', type=float, default=100)
+        subparser.add_argument('--test-percentage', type=float, default=100)
+        subparser.add_argument('--max-length', type=int)
+        subparser.add_argument('--train-max-length', type=int)
+        subparser.add_argument('--test-max-length', type=int)
+        subparser.add_argument('--batch-size', type=int, default=8)
+
+        gparser = subparser.add_argument_group("Training environment")
+        gparser.add_argument('--epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
+        gparser.add_argument('--log-dir', type=str, default=None, help='Directory for storing logs')
+        gparser.add_argument('--resume', type=str, default=None, help='Checkpoint file for resume')
+        gparser.add_argument('--save-config', type=str, default=None, help='save model configurations')
+        gparser.add_argument('--disable-progress-bar', action='store_true', help='disable the progress bar in training')
+        gparser.add_argument('--verbose', action='store_true', help='enable verbose outputs for debugging')
+
+        gparser = subparser.add_argument_group("Inference")
+        gparser.add_argument('--sanity-check', action='store_true')
+        gparser.add_argument('--inference-retain-k', type=int)
+
+        gparser = subparser.add_argument_group("Optimizer setting")
+        gparser.add_argument('--optimizer', choices=('Adam', 'AdamW', 'RMSprop', 'SGD', 'ASGD'), default='Adam')
+        gparser.add_argument('--l1-weight', type=float, default=0., help='the weight for L1 regularization (default: 0)')
+        gparser.add_argument('--l2-weight', type=float, default=0., help='the weight for L2 regularization (default: 0)')
+        gparser.add_argument('--embedreg-lambda', type=float, default=0., help='regularization strength for embedding layer (default: 0)')
+        gparser.add_argument('--score-loss-weight', type=float, default=1., help='the weight for score loss for hinge_mix loss (default: 1)')
+        gparser.add_argument('--lr', type=float, default=0.0001, help='the learning rate for optimizer (default: 0.0001)')
+        gparser.add_argument('--loss-func', choices=('hinge', 'hinge_mix', 'bce', 'bce_with_logits', 'mse', 'ce'), default='bce', help="loss fuction ('hinge', 'hinge_mix') ")
+
+        gparser = subparser.add_argument_group("Network setting")
+        gparser.add_argument('--model', choices=('transformer', 'bilstm', 'xtransformer', 'rnafm', 'rnaernie'), default='xtransformer', help="Model architecture")
+        gparser.add_argument('--embed-size', type=int, default=64, help='the dimension of embedding')
+        gparser.add_argument('--num-layers', type=int, default=4, help='the number of the transformer layers')
+        gparser.add_argument('--num-heads', type=int, default=4, help='the number of the transformer heads')
+        gparser.add_argument('--dropout-rate', type=float, default=0.1, help='dropout rate of the Transformer units (default: 0.1)')
+
+        subparser.set_defaults(func = lambda args, conf: Train().run(args, conf))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train RNA Fold with End-to-End Neural Model")
+    subparser = parser.add_subparsers(title='Sub-commands')
+    parser.set_defaults(func = lambda args, conf: parser.print_help())
+    Train.add_args(subparser)
+
+    DEFAULT_ARGS = [
+        "train",
+        # "--sanity-check",
+        "--train-percentage", "100",
+        "--test-percentage", "100",
+        "--seed", "0",
+        "--loss-func", "bce",
+        "--model", "rnafm",
+        "--train-max-length", "100",
+        "--test-max-length", "100",
+        "--embed-size", "128",
+        "--num-layers", "4",
+        "--num-heads", "16",
+        "--lr", "0.00001",
+        "--epoch", "10",
+        "--inference-retain-k", "3",
+        "--batch-size", "4",
+        "--verbose",
+        # "--load-params", f"{MODEL_FOLDER}/v8/ArchiveII90_TrainSetA_l500_p100.tch",
+        "--test-input", f"{DATA_FOLDER}/archiveII_Test.lst", # testing set
+        # "--param", f"ArchiveII90_TrainSetA_l500_p100", # save/load parameter file
+        f"{DATA_FOLDER}/ArchiveII_Train_TrainSetA.lst", # train set
+    ]
+    args = parser.parse_args(DEFAULT_ARGS)
+
+    args = parser.parse_args()
+
+    conf = list(filter(lambda x: x[0]=='@', sys.argv))
+    conf = None if len(conf) == 0 else conf[-1][1:]
+
+    args.func(args, conf)

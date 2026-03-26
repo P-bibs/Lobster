@@ -1,0 +1,11 @@
+type Point { x: f32, y: f32 }
+
+type Expr = Add(Expr, Expr) | Sub(Expr, Expr) | Const(f32)
+
+type List<T> = Nil | Cons(T, List<T>)
+
+type BTree<T> = Leaf | Node(T, BTree<T>, BTree<T>)
+
+rel my_lists = {
+  (0, Cons(1, Cons(2, Nil))),
+}

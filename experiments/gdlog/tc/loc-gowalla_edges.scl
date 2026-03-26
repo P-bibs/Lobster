@@ -1,0 +1,3 @@
+@file("./experiments/data/gdlog/loc-gowalla_edges.csv", deliminator=",")
+type edge(x: u32, y: u32)
+import "tc.scl"

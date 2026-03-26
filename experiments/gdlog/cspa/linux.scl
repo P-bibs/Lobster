@@ -1,0 +1,6 @@
+@file("./experiments/data/gdlog/cspa/linux/assign.csv", deliminator="\t")
+type Assign(x: u32, y: u32)
+@file("./experiments/data/gdlog/cspa/linux/dereference.csv", deliminator="\t")
+type Dereference(x: u32, y: u32)
+
+import "cspa.scl"

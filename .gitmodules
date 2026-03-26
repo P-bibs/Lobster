@@ -1,0 +1,3 @@
+[submodule "core/src/gpu_runtime/libsclgpu/cccl"]
+	path = core/src/gpu_runtime/libsclgpu/cccl
+	url = git@github.com:P-bibs/cccl.git

@@ -1,0 +1,40 @@
+import "../scl/clevr_eval.scl"
+
+// NL Question
+//   How many gray rubber cubes are the same size as the yellow block?
+
+// CLEVR Functional Program
+//   count(shape(material(color(
+//     same_size(unique(shape(color(scene(), "yellow"), "cube"))), "gray"
+//   ), "rubber"), "cube"))
+
+// CLEVR Functional Program written in serialized form
+//   0 {'inputs': [], 'function': 'scene', 'value_inputs': []}
+//   1 {'inputs': [0], 'function': 'filter_color', 'value_inputs': ['yellow']}
+//   2 {'inputs': [1], 'function': 'filter_shape', 'value_inputs': ['cube']}
+//   3 {'inputs': [2], 'function': 'unique', 'value_inputs': []}
+//   4 {'inputs': [3], 'function': 'same_size', 'value_inputs': []}
+//   5 {'inputs': [4], 'function': 'filter_color', 'value_inputs': ['gray']}
+//   6 {'inputs': [5], 'function': 'filter_material', 'value_inputs': ['rubber']}
+//   7 {'inputs': [6], 'function': 'filter_shape', 'value_inputs': ['cube']}
+//   8 {'inputs': [7], 'function': 'count', 'value_inputs': []}
+
+// Program in facts
+rel scene_expr = {0}
+rel filter_color_expr = {(1, 0, "yellow"), (5, 4, "gray")}
+rel filter_shape_expr = {(2, 1, "cube"), (7, 6, "cube")}
+rel filter_material_expr = {(6, 5, "rubber")}
+rel unique_expr = {(3, 2)}
+rel same_size_expr = {(4, 3)}
+rel count_expr = {(8, 7)}
+rel root_expr = {8}
+
+// Scene graph in facts
+rel obj = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+rel size = {(0, "small"), (1, "large"), (2, "large"), (3, "large"), (4, "small"), (5, "small"), (6, "small"), (7, "small"), (8, "small"), (9, "large")}
+rel color = {(0, "green"), (1, "red"), (2, "yellow"), (3, "cyan"), (4, "green"), (5, "yellow"), (6, "green"), (7, "red"), (8, "green"), (9, "red")}
+rel material = {(0, "metal"), (1, "metal"), (2, "rubber"), (3, "metal"), (4, "metal"), (5, "rubber"), (6, "metal"), (7, "metal"), (8, "rubber"), (9, "metal")}
+rel shape = {(0, "cube"), (1, "cube"), (2, "cube"), (3, "sphere"), (4, "cube"), (5, "cube"), (6, "cylinder"), (7, "cylinder"), (8, "cylinder"), (9, "sphere")}
+
+// Query number
+query num_result

@@ -1,0 +1,23 @@
+import "../scl/lot.scl"
+
+// "phrase": "A tulip has a skull.",
+// "context": "
+//   A bird has a skull.
+//   A tulip is capable of grow in garden.
+//   A plant does not have a skull.
+//   A tulip is not capable of shade from sun.
+// ",
+// "answer": 0
+
+rel phrase = {("has a", "tulip", "skull")}
+rel context = {
+  ("has a", "bird", "skull", true),
+  ("capable of", "tulip", "grow in garden", true),
+  ("has a", "plant", "skull", false),
+  ("capable of", "tulip", "shade from sun", false)
+}
+rel implicit_context = {
+  ("is a", "tulip", "plant")
+}
+
+query answer
