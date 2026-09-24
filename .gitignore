@@ -17,7 +17,6 @@ __pycache__
 *.sclcmpl
 
 raw**
-out**
 env/**
 stratum**.json
 **.nsys-rep
